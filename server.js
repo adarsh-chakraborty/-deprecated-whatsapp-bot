@@ -162,15 +162,7 @@ const initServer = async () => {
 				user.confirm = true;
 				client.sendMessage(
 					message.from,
-					`
-					To: ${email.target}
-					From: ${email.name} <${email.from}>
-					Subject: ${email.subject}
-					Message: ${email.body}
-					
-					--- End of the E-mail ---
-
-					*Confirm Send? <yes>*`
+					'To: ${email.target}\n\nFrom: ${email.name} <${email.from}>\nSubject: ${email.subject}\nMessage: ${email.body}\n\n--- End of the E-mail ---\n\n*Confirm Send? <yes>*'
 				);
 			} else if (user.confirm) {
 				user.isComposing = false;
@@ -192,8 +184,7 @@ const initServer = async () => {
 
 		if (!msg.startsWith('!')) {
 			let weather = await getWeather();
-			let welcome_template = `
-			*Welcome*
+			let welcome_template = `*Welcome*
 			${weather}
 			*Stats*
 			Uptime: ${formatTime(process.uptime())}
@@ -223,8 +214,7 @@ const initServer = async () => {
 			- add authorization
 			- add admin commands
 			- weather forecast
-			- Send E-mails
-		`;
+			- Send E-mails`;
 			return client.sendMessage(message.from, welcome_template);
 		}
 
@@ -264,7 +254,7 @@ const initServer = async () => {
 			console.log(docs);
 			if (docs.length > 0) {
 				let index = 1;
-				for (note of docs) {
+				for (let note of docs) {
 					client.sendMessage(message.from, `${index}. ${note.text}`);
 					index++;
 				}
