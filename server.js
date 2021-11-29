@@ -55,6 +55,7 @@ const initServer = async () => {
 	client.on('ready', () => {
 		console.log('Client is ready!');
 		client.sendMessage(process.env.OWNER, 'Notes bot is up and running! ✅🌍');
+		client.setStatus(`Uptime: ${formatTime(process.uptime())}`);
 	});
 
 	client.on('message', async (message) => {
@@ -184,7 +185,8 @@ const initServer = async () => {
 
 		if (!msg.startsWith('!')) {
 			let weather = await getWeather();
-			let welcome_template = `*Welcome*
+			let welcome_template = `
+			*Welcome*
 			${weather}
 			*Stats*
 			Uptime: ${formatTime(process.uptime())}
@@ -219,10 +221,7 @@ const initServer = async () => {
 		}
 
 		if (msg === '!pause') {
-			client.sendMessage(
-				message.from,
-				`You're no longer talking to the bot,type !start to start again!`
-			);
+			client.sendMessage(message.from, 'OKAY :(');
 			isActive = false;
 		}
 
@@ -501,8 +500,24 @@ const formatTime = (str) => {
 	return time;
 };
 
-app.use('/', (req, res, next) => {
+app.get('/', (req, res, next) => {
 	res.status(200).json({ Active: isActive });
+	const d = new Date();
+	const hour = d.getHours();
+	const min = d.getMinutes();
+	if (!client) return;
+	client.setStatus(`Available 😃 (Uptime: ${formatTime(process.uptime())})`);
+
+	if (hour === 23 && min >= 45) {
+		setTimeout(() => {
+			console.log('Sleeping...');
+			client.setStatus(`Sleeping 😴😴😴 Will be available again from 12pm`);
+			client.sendMessage(
+				process.env.OWNER,
+				`I'm going to sleep in approx 25 mins, good night sur 🥺`
+			);
+		}, 1500000);
+	}
 });
 
 async function getWeather(city = 'bilaspur') {
