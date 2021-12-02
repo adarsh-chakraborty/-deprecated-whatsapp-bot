@@ -501,8 +501,8 @@ const formatTime = (str) => {
 };
 
 app.get('/', (req, res, next) => {
-	res.status(200).json({ Active: isActive });
 	const d = new Date();
+	res.status(200).json({ Active: isActive, Timestamp: d.toLocaleString() });
 	const hour = d.getHours();
 	const min = d.getMinutes();
 	if (!client) return;
@@ -514,8 +514,9 @@ app.get('/', (req, res, next) => {
 			client.setStatus(`Sleeping 😴😴😴 Will be available again from 12pm`);
 			client.sendMessage(
 				process.env.OWNER,
-				`I'm going to sleep in approx 25 mins, good night sur 🥺`
+				`I'm going to sleep in approx 25 mins, good night sur 😃`
 			);
+			client.sendMessage(d.toISOString());
 		}, 1500000);
 	}
 });
