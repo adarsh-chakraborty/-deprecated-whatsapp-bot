@@ -318,20 +318,44 @@ const initServer = async () => {
 		if (msg.startsWith('!li')) {
 			const items = msg.split('!li ')[1].split(' ');
 			console.log(items);
-			List.findOneAndUpdate(
-				{},
-				{ items },
-				{ upsert: true, new: true, setDefaultsOnInsert: true },
-				(err, docs) => {
-					if (err) {
-						return console.log(err);
-					}
+			List.findOne({}, (err, docs) => {
+				if (err) {
+					console.log(err);
+					return;
+				}
+				if (docs) {
+					const updatedList = [...docs.items, ...items];
+					docs.items = updatedList;
+					docs.save();
 					client.sendMessage(
 						message.from,
-						`${items.length} items added to list! 🖊️`
+						`*+* ${items.length} items added to list! 🖊️`
 					);
+					return;
 				}
-			);
+
+				List.create({ items: items });
+				client.sendMessage(
+					message.from,
+					`*List created!* ${items.length} items added to list! 🖊️`
+				);
+				return;
+			});
+			// List.findOneAndUpdate(
+			// 	{},
+			// 	{ items },
+			// 	{ upsert: true, new: true },
+			// 	(err, docs) => {
+			// 		console.log(docs);
+			// 		if (err) {
+			// 			return console.log(err);
+			// 		}
+			// 		client.sendMessage(
+			// 			message.from,
+			// 			`${items.length} items added to list! 🖊️`
+			// 		);
+			// 	}
+			// );
 			return;
 		}
 
@@ -388,7 +412,7 @@ const initServer = async () => {
 						}
 						client.sendMessage(
 							message.from,
-							`${eitem} removed from your list. 😀`
+							`*-* ${eitem} removed from your list. 😀`
 						);
 					}
 				);
@@ -397,7 +421,7 @@ const initServer = async () => {
 			}
 			client.sendMessage(
 				message.from,
-				'List is empty! Add using !li <taco dogfood> 💅'
+				'List is empty! Add using !li <grapes dog-food> 🍇🐶'
 			);
 			return;
 		}
