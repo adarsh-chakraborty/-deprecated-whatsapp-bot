@@ -308,15 +308,20 @@ const initServer = async () => {
 				client.sendMessage(message.from, temp.join('\n'));
 				return;
 			}
-			client.sendMessage(
-				message.from,
-				'List is empty! Add using !li <taco dogfood>'
-			);
+			client.sendMessage(message.from, 'Your list is empty!');
 			return;
 		}
 
 		if (msg.startsWith('!li')) {
-			const items = msg.split('!li ')[1].split(' ');
+			const temp = msg.split('!li ');
+			if (!temp[1]) {
+				client.sendMessage(
+					message.from,
+					`*Syntax Error!*\nUsage: !li <items separated by space>`
+				);
+				return;
+			}
+			const items = temp[1].split(' ');
 			console.log(items);
 			List.findOne({}, (err, docs) => {
 				if (err) {
@@ -374,8 +379,7 @@ const initServer = async () => {
 			if (indexes.length > 1 || isNaN(indexes)) {
 				client.sendMessage(
 					message.from,
-					`Syntax Error! [dl <index>]
-				Please Only one index at a time.)`
+					`Syntax Error! [dl <index>]\nPlease give only one index at a time.)`
 				);
 				return;
 			}
@@ -391,37 +395,28 @@ const initServer = async () => {
 				return;
 			}
 			const { items } = mylist;
-			console.log(items);
-			if (items.length > 0) {
-				// get existing item
-				const eitem = items[indexes - 1];
-				if (!eitem) {
-					client.sendMessage(message.from, `Item doesn't exists in list. 😏`);
-					return;
-				}
-				const newlist = items.filter((i) => i !== eitem);
-				console.log(newlist);
-
-				List.findOneAndUpdate(
-					{},
-					{ items: newlist },
-					{ new: true, setDefaultsOnInsert: true },
-					(err, docs) => {
-						if (err) {
-							return console.log(err);
-						}
-						client.sendMessage(
-							message.from,
-							`*-* ${eitem} removed from your list. 😀`
-						);
-					}
-				);
-
+			// get existing item
+			const eitem = items[indexes - 1];
+			if (!eitem) {
+				client.sendMessage(message.from, `Item doesn't exists in list. 😏`);
 				return;
 			}
-			client.sendMessage(
-				message.from,
-				'List is empty! Add using !li <grapes dog-food> 🍇🐶'
+			const newlist = items.filter((i) => i !== eitem);
+			console.log(newlist);
+
+			List.findOneAndUpdate(
+				{},
+				{ items: newlist },
+				{ new: true, setDefaultsOnInsert: true },
+				(err, docs) => {
+					if (err) {
+						return console.log(err);
+					}
+					client.sendMessage(
+						message.from,
+						`*-* ${eitem} removed from your list. 😀`
+					);
+				}
 			);
 			return;
 		}
@@ -540,7 +535,7 @@ app.get('/', (req, res, next) => {
 			client.setStatus(`Sleeping 😴😴😴 Will be available again from 12pm`);
 			client.sendMessage(
 				process.env.OWNER,
-				`I'm going to sleep in approx 25 mins, good night sur 😃`
+				`I'm going to sleep in approx 25 mins,good night sur 😃`
 			);
 			client.sendMessage(d.toISOString());
 		}, 1500000);
