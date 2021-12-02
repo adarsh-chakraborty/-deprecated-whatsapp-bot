@@ -60,6 +60,8 @@ const initServer = async () => {
 
 	client.on('message', async (message) => {
 		console.log('MESSAGE RECEIVED', message);
+		if (message.isStatus) return;
+
 		const msg = message.body.trim();
 
 		if (msg === '!start') {
