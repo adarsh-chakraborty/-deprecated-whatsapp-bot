@@ -559,7 +559,9 @@ async function getWeather(city = 'bilaspur') {
 			emoji = '🌩️';
 		} else if (desc.includes('haze')) {
 			emoji = '🌫️';
-		} else if (main === 'Clouds') {
+		}
+
+		if (main === 'Clouds') {
 			return `${main} in ${city}. ${desc} ${emoji}`;
 		}
 		return `Weather is ${main} in ${city}. ${desc} ${emoji}`;
