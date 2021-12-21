@@ -22,6 +22,7 @@ let sessionData;
 let client;
 const PORT = process.env.PORT || 3000;
 let isActive = true;
+let INTROVERT_MODE = true;
 
 let user = {
   isComposing: false,
@@ -59,8 +60,33 @@ const initServer = async () => {
   });
 
   client.on('message', async (message) => {
+    console.log(message.from);
     console.log('MESSAGE RECEIVED', message);
     if (message.isStatus) return;
+
+    if (message.type === 'sticker' && message.hasMedia) {
+      console.log('Received a sticker!');
+      const media = await message.downloadMedia();
+      client.sendMessage(process.env.GROUP, media, {
+        sendMediaAsSticker: true,
+        stickerName: 'Doge bot 🐕',
+        stickerAuthor: 'Adarsh Chakraborty'
+      });
+
+      return;
+    }
+
+    if (
+      INTROVERT_MODE &&
+      message.from !== process.env.OWNER &&
+      message.from !== process.env.GROUP
+    ) {
+      console.log(message.from);
+      console.log(process.env.OWNER);
+      console.log(process.env.GROUP);
+      console.log('Introvert mode is ON, not replying to strangers');
+      return;
+    }
 
     const msg = message.body.trim();
 
@@ -218,7 +244,13 @@ const initServer = async () => {
 			- add authorization
 			- add admin commands
 			- weather forecast
-			- Send E-mails`;
+			- Send E-mails
+      
+      ${
+        INTROVERT_MODE
+          ? `IntrovertMode is ON, Not replying to strangers 😬`
+          : `IntrovertMode is OFF, Accessible to everyone 😄`
+      }`;
       return client.sendMessage(message.from, welcome_template);
     }
 
@@ -523,7 +555,9 @@ const formatTime = (str) => {
 
 app.get('/', (req, res, next) => {
   const d = new Date();
-  res.status(200).json({ Active: isActive, Timestamp: d.toLocaleString() });
+  res
+    .status(200)
+    .json({ Active: isActive, INTROVERT_MODE, Timestamp: d.toLocaleString() });
   const hour = d.getHours();
   const min = d.getMinutes();
   if (!client) return;
@@ -563,11 +597,11 @@ async function getWeather(city = 'bilaspur') {
     }
 
     if (main === 'Clouds') {
-      return `${main} in ${city}. ${desc} ${emoji}
-	   	It's currently ${temp}℃ in ${city}`;
+      return `${main} in ${city}.
+        ${desc} ${emoji}. Temperature is ${temp}℃`;
     }
-    return `Weather is ${main} in ${city}. ${desc} ${emoji}
-		It's currently ${temp}℃ in ${city}`;
+    return `Weather is ${main} in ${city}.
+      ${desc} ${emoji}. Temperature is ${temp}℃`;
   } catch (error) {
     console.error(error);
   }
