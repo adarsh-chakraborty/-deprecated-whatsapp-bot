@@ -237,16 +237,16 @@ const initServer = async () => {
 			!note <text> (Add New Note)
 			!notes (View all Notes)
 			!del <note> (Delete Notes)
-			!weather <city || default=bilaspur>
+			!weather <cityname>
 			
 			*E-mail*
 			!email !discard !send
 			
 			*List*
 			!list
-			!li <Add Items separated by space>
+			!li <Item1, Item2>
 			!dlist (Deletes the entire list)
-			!dl <index> (Deletes # item from list)
+			!dl <index> (Remove # from list)
 			*Other*
 			!ping
 			!pause
@@ -258,11 +258,7 @@ const initServer = async () => {
 			- weather forecast
 			- Send E-mails
       
-      ${
-        INTROVERT_MODE
-          ? `IntrovertMode is ON, Not replying to strangers 😬`
-          : `IntrovertMode is OFF, Accessible to everyone 😄`
-      }`;
+      ${INTROVERT_MODE ? `IntrovertMode is ON 😬` : `IntrovertMode is OFF 😄`}`;
       return client.sendMessage(message.from, welcome_template);
     }
 
@@ -276,9 +272,9 @@ const initServer = async () => {
       return;
     }
 
-    if (msg === '@everyone') {
+    if (msg.startsWith('@everyone')) {
       // 2 cases
-      if (message.hasQuotedMsg) {
+      if (msg === '@everyone' && message.hasQuotedMsg) {
         const chat = await message.getChat();
         const quotedMsg = await message.getQuotedMessage();
         let text = '';
@@ -298,6 +294,26 @@ const initServer = async () => {
         return;
       }
 
+      if (msg === '@everyone') {
+        const chat = await message.getChat();
+
+        let text = '';
+        let mentions = [];
+
+        for (let participant of chat.participants) {
+          const contact = await client.getContactById(
+            participant.id._serialized
+          );
+
+          mentions.push(contact);
+          text += `@${participant.id.user} `;
+        }
+
+        await chat.sendMessage(text, { mentions });
+
+        return;
+      }
+
       const chat = await message.getChat();
 
       let text = '';
@@ -310,9 +326,8 @@ const initServer = async () => {
         text += `@${participant.id.user} `;
       }
 
-      await chat.sendMessage(text, { mentions });
+      await message.reply(text, message.from, { mentions });
 
-      // command executed;
       return;
     }
 
@@ -607,9 +622,12 @@ const formatTime = (str) => {
 
 app.get('/', (req, res, next) => {
   const d = new Date();
-  res
-    .status(200)
-    .json({ Active: isActive, INTROVERT_MODE, Timestamp: d.toLocaleString() });
+  res.status(200).json({
+    Active: isActive,
+    INTROVERT_MODE,
+    Timestamp: d.toLocaleString(),
+    totalUptime: formatTime(process.uptime())
+  });
   const hour = d.getHours();
   const min = d.getMinutes();
   if (!client) return;
@@ -618,7 +636,7 @@ app.get('/', (req, res, next) => {
   if (hour === 23 && min >= 45) {
     setTimeout(() => {
       console.log('Sleeping...');
-      client.setStatus(`Sleeping 😴😴😴 Will be available again from 12pm`);
+      client.setStatus(`Sleeping 😴😴😴 Will be available tomorrow from 7am.`);
       client.sendMessage(
         process.env.OWNER,
         `I'm going to sleep in approx 25 mins,good night sur 😃`
@@ -649,11 +667,17 @@ async function getWeather(city = 'bilaspur') {
     }
 
     if (main === 'Clouds') {
-      return `${main} in ${city}.
-        ${desc} ${emoji}. Temperature is ${temp}℃`;
+      return `
+      ${main} in ${city}.
+      ${desc} ${emoji}.
+      Feels like ${temp}℃
+      `;
     }
-    return `Weather is ${main} in ${city}.
-      ${desc} ${emoji}. Temperature is ${temp}℃`;
+    return `
+    Weather is ${main} in ${city}.
+    ${desc} ${emoji}.
+    Feels like ${temp}℃
+    `;
   } catch (error) {
     console.error(error);
   }
