@@ -18,6 +18,8 @@ const WEATHER_BASE_URL = `https://api.openweathermap.org/data/2.5/weather?q=`;
 
 const API_KEY = `&appid=${process.env.API_KEY}&units=metric`;
 
+const whitelist = new Map();
+
 let sessionData;
 let client;
 const PORT = process.env.PORT || 3000;
@@ -63,11 +65,19 @@ const initServer = async () => {
     console.log(message.from);
     console.log('MESSAGE RECEIVED', message);
     if (message.isStatus) return;
+    if (message.body === '!whitelist' && message.author === process.env.OWNER) {
+      message.reply('Temporarly whitelisted');
+      console.log(message.from);
+      whitelist.set(message.from, message.from);
+      console.log(whitelist);
+      return;
+    }
 
-    if (message.type === 'sticker' && message.hasMedia) {
+    if (message.type === 'sticker') {
       console.log('Received a sticker!');
       const media = await message.downloadMedia();
-      client.sendMessage(process.env.GROUP, media, {
+      console.log(media);
+      client.sendMessage(process.env.STICKER_GROUP, media, {
         sendMediaAsSticker: true,
         stickerName: 'Doge bot 🐕',
         stickerAuthor: 'Adarsh Chakraborty'
@@ -79,11 +89,13 @@ const initServer = async () => {
     if (
       INTROVERT_MODE &&
       message.from !== process.env.OWNER &&
-      message.from !== process.env.GROUP
+      message.from !== process.env.STICKER_GROUP &&
+      message.from !== process.env.G10_GROUP &&
+      !whitelist.has(message.from)
     ) {
       console.log(message.from);
       console.log(process.env.OWNER);
-      console.log(process.env.GROUP);
+      console.log(process.env.STICKER_GROUP);
       console.log('Introvert mode is ON, not replying to strangers');
       return;
     }
@@ -92,7 +104,7 @@ const initServer = async () => {
 
     if (msg === '!start') {
       isActive = true;
-      message.reply('Active!');
+      message.reply('Already Active!');
       return;
     }
 
@@ -191,7 +203,7 @@ const initServer = async () => {
         user.confirm = true;
         client.sendMessage(
           message.from,
-          'To: ${email.target}\n\nFrom: ${email.name} <${email.from}>\nSubject: ${email.subject}\nMessage: ${email.body}\n\n--- End of the E-mail ---\n\n*Confirm Send? <yes>*'
+          `To: ${email.target}\n\nFrom: ${email.name} <${email.from}>\nSubject: ${email.subject}\nMessage: ${email.body}\n\n--- End of the E-mail ---\n\n*Confirm Send? <yes>*`
         );
       } else if (user.confirm) {
         user.isComposing = false;
@@ -211,7 +223,7 @@ const initServer = async () => {
       return;
     }
 
-    if (!msg.startsWith('!')) {
+    if (msg === '!help') {
       let weather = await getWeather();
       let welcome_template = `
 			*Welcome*
@@ -261,6 +273,46 @@ const initServer = async () => {
 
     if (msg === '!ping') {
       message.reply('pong!');
+      return;
+    }
+
+    if (msg === '@everyone') {
+      // 2 cases
+      if (message.hasQuotedMsg) {
+        const chat = await message.getChat();
+        const quotedMsg = await message.getQuotedMessage();
+        let text = '';
+        let mentions = [];
+
+        for (let participant of chat.participants) {
+          const contact = await client.getContactById(
+            participant.id._serialized
+          );
+
+          mentions.push(contact);
+          text += `@${participant.id.user} `;
+        }
+
+        // await chat.sendMessage(text, { mentions });
+        await quotedMsg.reply(text, message.from, { mentions });
+        return;
+      }
+
+      const chat = await message.getChat();
+
+      let text = '';
+      let mentions = [];
+
+      for (let participant of chat.participants) {
+        const contact = await client.getContactById(participant.id._serialized);
+
+        mentions.push(contact);
+        text += `@${participant.id.user} `;
+      }
+
+      await chat.sendMessage(text, { mentions });
+
+      // command executed;
       return;
     }
 
