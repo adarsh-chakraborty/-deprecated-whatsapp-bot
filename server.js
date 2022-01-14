@@ -20,6 +20,10 @@ const API_KEY = `&appid=${process.env.API_KEY}&units=metric`;
 
 const whitelist = new Map();
 
+whitelist.set(process.env.OWNER, process.env.OWNER);
+whitelist.set(process.env.STICKER_GROUP, process.env.STICKER_GROUP);
+whitelist.set(process.env.G10_GROUP, process.env.G10_GROUP);
+
 let sessionData;
 let client;
 const PORT = process.env.PORT || 3000;
@@ -86,13 +90,7 @@ const initServer = async () => {
       return;
     }
 
-    if (
-      INTROVERT_MODE &&
-      message.from !== process.env.OWNER &&
-      message.from !== process.env.STICKER_GROUP &&
-      message.from !== process.env.G10_GROUP &&
-      !whitelist.has(message.from)
-    ) {
+    if (INTROVERT_MODE && !whitelist.has(message.from)) {
       console.log(message.from);
       console.log(process.env.OWNER);
       console.log(process.env.STICKER_GROUP);
@@ -230,7 +228,6 @@ const initServer = async () => {
 			${weather}
 			*Stats*
 			Uptime: ${formatTime(process.uptime())}
-			Stop talking with the bot with !pause
 			
 			*Available commands*
 			*Notes*
@@ -247,6 +244,7 @@ const initServer = async () => {
 			!li <Item1, Item2>
 			!dlist (Deletes the entire list)
 			!dl <index> (Remove # from list)
+
 			*Other*
 			!ping
 			!pause
@@ -258,7 +256,17 @@ const initServer = async () => {
 			- weather forecast
 			- Send E-mails
       
-      ${INTROVERT_MODE ? `IntrovertMode is ON 😬` : `IntrovertMode is OFF 😄`}`;
+      ${INTROVERT_MODE ? `IntrovertMode is ON 😬` : `IntrovertMode is OFF 😄`}
+      
+      *Tagging Everyone:*
+
+      Either start your message like
+      *@everyone your msg..*
+
+      OR, Reply to a message with
+      *@everyone*
+      OR, Send a *@everyone* in chat.
+      `;
       return client.sendMessage(message.from, welcome_template);
     }
 
@@ -668,15 +676,15 @@ async function getWeather(city = 'bilaspur') {
 
     if (main === 'Clouds') {
       return `
-      ${main} in ${city}.
+      ${main} in *${city}*.
       ${desc} ${emoji}.
-      Feels like ${temp}℃
+      Feels like *${temp}℃*
       `;
     }
     return `
-    Weather is ${main} in ${city}.
+    Weather is ${main} in *${city}*.
     ${desc} ${emoji}.
-    Feels like ${temp}℃
+    Feels like *${temp}℃*
     `;
   } catch (error) {
     console.error(error);
