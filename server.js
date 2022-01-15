@@ -27,7 +27,7 @@ whitelist.set(process.env.G10_GROUP, process.env.G10_GROUP);
 let sessionData;
 let client;
 const PORT = process.env.PORT || 3000;
-let isActive = true;
+let isActive = false;
 let INTROVERT_MODE = true;
 
 let user = {
@@ -61,8 +61,9 @@ const initServer = async () => {
 
   client.on('ready', () => {
     console.log('Client is ready!');
-    client.sendMessage(process.env.OWNER, 'Notes bot is up and running! ✅🌍');
+    client.sendMessage(process.env.OWNER, 'Doge bot is up and running! ✅🌍');
     client.setStatus(`Uptime: ${formatTime(process.uptime())}`);
+    isActive = true;
   });
 
   client.on('message', async (message) => {
@@ -101,9 +102,12 @@ const initServer = async () => {
     const msg = message.body.trim();
 
     if (msg === '!start') {
+      if (isActive) {
+        message.reply('Already Active!');
+        return;
+      }
       isActive = true;
-      message.reply('Already Active!');
-      return;
+      message.reply('Active ✅');
     }
 
     if (!isActive) return;
@@ -561,6 +565,7 @@ const initServer = async () => {
 
   client.on('auth_failure', (msg) => {
     console.error('AUTHENTICATION FAILURE', msg);
+    process.exit(1);
   });
 
   // save session
@@ -638,7 +643,7 @@ app.get('/', (req, res, next) => {
   });
   const hour = d.getHours();
   const min = d.getMinutes();
-  if (!client) return;
+  if (!client || !sessionData || !isActive) return;
   client.setStatus(`Available 😃 (Uptime: ${formatTime(process.uptime())})`);
 
   if (hour === 23 && min >= 45) {
