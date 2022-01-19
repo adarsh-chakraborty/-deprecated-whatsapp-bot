@@ -8,11 +8,12 @@ const app = express();
 const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
 const axios = require('axios').default;
-const { Client } = require('whatsapp-web.js');
+const { Client, Util, MessageMedia } = require('whatsapp-web.js');
 const AuthToken = require('./models/AuthToken');
 const Notes = require('./models/Notes');
 const List = require('./models/List');
 const qrcode = require('qrcode-terminal');
+const gTTS = require('gtts');
 
 const WEATHER_BASE_URL = `https://api.openweathermap.org/data/2.5/weather?q=`;
 
@@ -66,12 +67,47 @@ const initServer = async () => {
     isActive = true;
   });
 
+  /* @everyone when sending from main account. */
+
+  /*
+  client.on('message_create', async (message) => {
+    if (message.body === '@everyone' && message.from === process.env.OWNER) {
+      const chat = await message.getChat();
+      let text = '';
+      let mentions = [];
+
+      for (let participant of chat.participants) {
+        const contact = await client.getContactById(participant.id._serialized);
+
+        mentions.push(contact);
+        text += `@${participant.id.user} `;
+      }
+
+      await chat.sendMessage(text, { mentions });
+    }
+  });
+*/
+
   client.on('message', async (message) => {
-    console.log(message.from);
-    console.log('MESSAGE RECEIVED', message);
+    if (!process.env.HEROKU) console.log('MESSAGE RECEIVED', message);
     if (message.isStatus) return;
+    if (message.type === 'sticker') {
+      console.log('Received a sticker!');
+      const media = await message.downloadMedia();
+
+      client.sendMessage(process.env.STICKER_GROUP, media, {
+        sendMediaAsSticker: true,
+        stickerName: 'Doge bot 🐕',
+        stickerAuthor: 'Adarsh Chakraborty'
+      });
+      if (!process.env.HEROKU) {
+        console.log(media);
+      }
+      return;
+    }
+
     if (message.body === '!whitelist' && message.author === process.env.OWNER) {
-      message.reply('Temporarly whitelisted');
+      message.reply('This group is now temporarly whitelisted.');
       console.log(message.from);
       whitelist.set(message.from, message.from);
       console.log(whitelist);
@@ -284,13 +320,60 @@ const initServer = async () => {
       return;
     }
 
+    if (msg.startsWith('!tts')) {
+      const text = msg.split('!tts')[1].trim();
+      console.log(text);
+      if (!text)
+        return await message.reply('❌ Invalid syntax! Try !tts <text>');
+
+      const gtts = new gTTS(text, 'hi');
+      gtts.save('./audio.mp3', async function (err, result) {
+        if (err) {
+          return;
+        }
+        const audioMsg = await MessageMedia.fromFilePath('./audio.mp3');
+
+        client.sendMessage(message.from, audioMsg, { sendAudioAsVoice: true });
+      });
+    }
+
+    if (msg === '!ts') {
+      if (!message.hasQuotedMsg) {
+        message.reply(
+          'Please using this command while replying to an Image. 😑'
+        );
+        return;
+      }
+
+      const quotedMsg = await message.getQuotedMessage();
+
+      if (quotedMsg.type !== 'image') {
+        quotedMsg.reply('This is not an Image. 😑');
+        return;
+      }
+
+      const media = await message.downloadMedia();
+
+      const data = await Util.formatImageToWebpSticker(media);
+
+      client.sendMessage(message.from, data, {
+        sendMediaAsSticker: true,
+        stickerName: 'Doge bot 🐕',
+        stickerAuthor: 'Adarsh Chakraborty'
+      });
+      return;
+    }
+
     if (msg.startsWith('@everyone')) {
-      // 2 cases
+      const chat = await message.getChat();
+      let text = '';
+      let mentions = [];
+
+      // 3 cases
+      // If message === everyone & has quoted Message
+      // Send Reply to original message
       if (msg === '@everyone' && message.hasQuotedMsg) {
-        const chat = await message.getChat();
         const quotedMsg = await message.getQuotedMessage();
-        let text = '';
-        let mentions = [];
 
         for (let participant of chat.participants) {
           const contact = await client.getContactById(
@@ -305,13 +388,9 @@ const initServer = async () => {
         await quotedMsg.reply(text, message.from, { mentions });
         return;
       }
-
+      // If message is only @everyone without quote
+      // Send a message mentioning everyone
       if (msg === '@everyone') {
-        const chat = await message.getChat();
-
-        let text = '';
-        let mentions = [];
-
         for (let participant of chat.participants) {
           const contact = await client.getContactById(
             participant.id._serialized
@@ -326,10 +405,8 @@ const initServer = async () => {
         return;
       }
 
-      const chat = await message.getChat();
-
-      let text = '';
-      let mentions = [];
+      // Message starts with @everyone
+      // Mention everyone on the message.
 
       for (let participant of chat.participants) {
         const contact = await client.getContactById(participant.id._serialized);
