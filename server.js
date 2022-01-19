@@ -25,6 +25,9 @@ whitelist.set(process.env.OWNER, process.env.OWNER);
 whitelist.set(process.env.STICKER_GROUP, process.env.STICKER_GROUP);
 whitelist.set(process.env.G10_GROUP, process.env.G10_GROUP);
 
+if (!process.env.HEROKU)
+  whitelist.set(process.env.TEST_GROUP, process.env.TEST_GROUP);
+
 let sessionData;
 let client;
 const PORT = process.env.PORT || 3000;
@@ -107,7 +110,7 @@ const initServer = async () => {
     }
 
     if (message.body === '!whitelist' && message.author === process.env.OWNER) {
-      message.reply('This group is now temporarly whitelisted.');
+      message.reply('Group whitelisted 📝✅');
       console.log(message.from);
       whitelist.set(message.from, message.from);
       console.log(whitelist);
@@ -128,11 +131,10 @@ const initServer = async () => {
     }
 
     if (INTROVERT_MODE && !whitelist.has(message.from)) {
-      console.log(message.from);
-      console.log(process.env.OWNER);
-      console.log(process.env.STICKER_GROUP);
-      console.log('Introvert mode is ON, not replying to strangers');
-      return;
+      return console.log(
+        'Introvert mode is ON, not replying to stranger: ',
+        message.from
+      );
     }
 
     const msg = message.body.trim();
@@ -286,8 +288,10 @@ const initServer = async () => {
 			!dl <index> (Remove # from list)
 
 			*Other*
-			!ping
-			!pause
+			!pause 
+			!ping (Check if bot is active)
+      !tts <txt> (Text to speech)
+      !ts (Converts Image toSticker)
 			
 			*Todos:*
 			- Fetch Weather status
@@ -338,6 +342,8 @@ const initServer = async () => {
     }
 
     if (msg === '!ts') {
+      if (process.env.HEROKU)
+        return message.reply('This feature is in development.');
       if (!message.hasQuotedMsg) {
         message.reply(
           'Please using this command while replying to an Image. 😑'
@@ -354,7 +360,7 @@ const initServer = async () => {
 
       const media = await message.downloadMedia();
 
-      const data = await Util.formatImageToWebpSticker(media);
+      const data = await Util.formatToWebpSticker(media);
 
       client.sendMessage(message.from, data, {
         sendMediaAsSticker: true,
@@ -718,22 +724,28 @@ app.get('/', (req, res, next) => {
     Timestamp: d.toLocaleString(),
     totalUptime: formatTime(process.uptime())
   });
-  const hour = d.getHours();
-  const min = d.getMinutes();
   if (!client || !sessionData || !isActive) return;
   client.setStatus(`Available 😃 (Uptime: ${formatTime(process.uptime())})`);
+});
 
-  if (hour === 23 && min >= 45) {
+app.get('/sleep', (req, res, next) => {
+  const token = req.header('SLEEP_SECRET');
+  if (token === process.env.SLEEP_SECRET) {
+    if (!client || !sessionData || !isActive)
+      return res.status(500).json({ message: ' Doge BOT is not ready' });
+
     setTimeout(() => {
       console.log('Sleeping...');
-      client.setStatus(`Sleeping 😴😴😴 Will be available tomorrow from 7am.`);
+      client.setStatus(`Sleeping 😴😴😴 Will be available tomorrow from 9am.`);
       client.sendMessage(
         process.env.OWNER,
         `I'm going to sleep in approx 25 mins,good night sur 😃`
       );
-      client.sendMessage(d.toISOString());
     }, 1500000);
+
+    return res.json({ message: 'Command accepted!' });
   }
+  res.json({ message: 'Not authorized, Token missing' });
 });
 
 async function getWeather(city = 'bilaspur') {
