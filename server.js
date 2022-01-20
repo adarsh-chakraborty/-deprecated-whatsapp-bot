@@ -22,6 +22,59 @@ const API_KEY = `&appid=${process.env.API_KEY}&units=metric`;
 
 const whitelist = new Map();
 const meetlinks = new Map();
+const ttslanguages = new Map([
+  ['af', 'Afrikaans'],
+  ['sq', 'Albanian'],
+  ['ar', 'Arabic'],
+  ['hy', 'Armenian'],
+  ['ca', 'Catalan'],
+  ['zh', 'Chinese'],
+  ['zh-cn', 'Chinese (Mandarin/China)'],
+  ['zh-tw', 'Chinese (Mandarin/Taiwan)'],
+  ['zh-yue', 'Chinese (Cantonese)'],
+  ['hr', 'Croatian'],
+  ['cs', 'Czech'],
+  ['da', 'Danish'],
+  ['nl', 'Dutch'],
+  ['en', 'English'],
+  ['en-au', 'English (Australia)'],
+  ['en-uk', 'English (United Kingdom)'],
+  ['en-us', 'English (United States)'],
+  ['eo', 'Esperanto'],
+  ['fi', 'Finnish'],
+  ['fr', 'French'],
+  ['de', 'German'],
+  ['el', 'Greek'],
+  ['ht', 'Haitian Creole'],
+  ['hi', 'Hindi'],
+  ['hu', 'Hungarian'],
+  ['is', 'Icelandic'],
+  ['id', 'Indonesian'],
+  ['it', 'Italian'],
+  ['ja', 'Japanese'],
+  ['ko', 'Korean'],
+  ['la', 'Latin'],
+  ['lv', 'Latvian'],
+  ['mk', 'Macedonian'],
+  ['no', 'Norwegian'],
+  ['pl', 'Polish'],
+  ['pt', 'Portuguese'],
+  ['pt-br', 'Portuguese (Brazil)'],
+  ['ro', 'Romanian'],
+  ['ru', 'Russian'],
+  ['sr', 'Serbian'],
+  ['sk', 'Slovak'],
+  ['es', 'Spanish'],
+  ['es-es', 'Spanish (Spain)'],
+  ['es-us', 'Spanish (United States)'],
+  ['sw', 'Swahili'],
+  ['sv', 'Swedish'],
+  ['ta', 'Tamil'],
+  ['th', 'Thai'],
+  ['tr', 'Turkish'],
+  ['vi', 'Vietnamese'],
+  ['cy', 'Welsh']
+]);
 
 whitelist.set(process.env.OWNER, process.env.OWNER);
 whitelist.set(process.env.STICKER_GROUP, process.env.STICKER_GROUP);
@@ -35,6 +88,7 @@ let client;
 const PORT = process.env.PORT || 3000;
 let isActive = false;
 let INTROVERT_MODE = true;
+let ttslang = 'en';
 
 let user = {
   isComposing: false,
@@ -278,6 +332,7 @@ const initServer = async () => {
 			Uptime: ${formatTime(process.uptime())}
 			
 			*Available commands*
+
 			*Notes*
 			!note <text> (Add New Note)
 			!notes (View all Notes)
@@ -286,6 +341,13 @@ const initServer = async () => {
 			
 			*E-mail*
 			!email !discard !send
+
+      *Text-To-Speech*
+      *!tts* <text>
+      *!ttslang* <language>
+      _Changes default TTS language_
+      *!ttsall*
+      _View All supported languages_
 			
 			*List*
 			!list
@@ -296,15 +358,7 @@ const initServer = async () => {
 			*Other*
 			!pause 
 			!ping (Check if bot is active)
-      !tts <txt> (Text to speech)
       !ts (Converts Image toSticker)
-			
-			*Todos:*
-			- Fetch Weather status
-			- add authorization
-			- add admin commands
-			- weather forecast
-			- Send E-mails
       
       ${INTROVERT_MODE ? `IntrovertMode is ON 😬` : `IntrovertMode is OFF 😄`}
       
@@ -330,13 +384,26 @@ const initServer = async () => {
       return;
     }
 
+    if (msg.startsWith('!ttslang')) {
+      const lang = msg.split(' ')[1];
+      if (lang && ttslanguages.has(lang)) {
+        ttslang = lang;
+        message.reply(`TTS language set to *${ttslanguages.get(lang)}*. 😀`);
+        return;
+      }
+      message.reply(
+        `${lang} is not recognized as valid language.\nType *!ttsall* to view all supported languages.`
+      );
+      return;
+    }
+
     if (msg.startsWith('!tts')) {
       const text = msg.split('!tts')[1].trim();
       console.log(text);
       if (!text)
         return await message.reply('❌ Invalid syntax! Try !tts <text>');
 
-      const gtts = new gTTS(text, 'hi');
+      const gtts = new gTTS(text, ttslang);
       gtts.save('./audio.mp3', async function (err, result) {
         if (err) {
           return;
@@ -703,6 +770,17 @@ const initServer = async () => {
       message.reply('Something went wrong, could not set the link.');
       return;
     }
+
+    if (msg === '!ttsall') {
+      let text = '';
+      for (const [key, language] of ttslanguages) {
+        text += `*${key}* - ${language}\n`;
+      }
+      client.sendMessage(message.from, text);
+      return;
+    }
+
+    // On Message Event Ends Here
   });
 
   client.on('auth_failure', (msg) => {
