@@ -21,6 +21,7 @@ const WEATHER_BASE_URL = `https://api.openweathermap.org/data/2.5/weather?q=`;
 const API_KEY = `&appid=${process.env.API_KEY}&units=metric`;
 
 const whitelist = new Map();
+const meetlinks = new Map();
 
 whitelist.set(process.env.OWNER, process.env.OWNER);
 whitelist.set(process.env.STICKER_GROUP, process.env.STICKER_GROUP);
@@ -656,29 +657,47 @@ const initServer = async () => {
         return;
       }
       const subject = subjectlink[0].toLowerCase();
-      const lenk = await MeetLink.findOne({ subject });
-      if (lenk) {
-        if (message.hasQuotedMsg) {
-          const quotedMsg = await message.getQuotedMessage();
-          quotedMsg.reply(`Subject: ${subject}\nMeet Link: ${lenk.link}`);
-          return;
-        }
-        message.reply(`Subject: ${subject}\nMeet Link: ${lenk.link}`);
+      let meetLink;
+      if (meetlinks.has(subject)) {
+        meetLink = { subject: subject, link: meetlinks.get(subject) };
+      } else {
+        meetLink = await MeetLink.findOne({ subject });
+        if (!meetLink) return;
+        meetlinks.set(meetLink.subject, meetLink.link);
       }
+
+      if (message.hasQuotedMsg) {
+        const quotedMsg = await message.getQuotedMessage();
+        quotedMsg.reply(`Subject: ${subject}\nMeet Link: ${meetLink.link}`);
+        return;
+      }
+      message.reply(`Subject: ${subject}\nMeet Link: ${meetLink.link}`);
       return;
     }
 
     if (msg.startsWith('!setlink')) {
       const args = msg.split(' ');
-      const subject = args[1];
+      const subject = args[1]?.toLowerCase();
       const link = args[2];
-      if (!subject || !link) {
-        message.reply('Invalid syntax, !setlink <subject> <link>');
+      if (!subject || !link || args[0] !== '!setlink') {
+        message.reply('Invalid syntax ❌\nTry !setlink <subject> <link>');
+        return;
+      }
+      if (!isValidURL(link)) {
+        message.reply('*Validation Error!*\nInvalid Link 🔗⛔');
+        return;
+      }
+      const existingLink = await MeetLink.findOne({ subject });
+      if (existingLink) {
+        existingLink.link = link;
+        await existingLink.save();
+        message.reply(`${subject} link updated. ✅`);
+        meetlinks.set(subject, link);
         return;
       }
       const result = await MeetLink.create({ subject, link });
       if (result) {
-        message.reply('OK ✅');
+        message.reply(`${subject} link created ✅`);
         return;
       }
       message.reply('Something went wrong, could not set the link.');
@@ -855,4 +874,8 @@ function isValidEmail(str) {
     return true;
   }
   return false;
+}
+
+function isValidURL(url) {
+  return /^(?:\w+:)?\/\/([^\s\.]+\.\S{2}|localhost[\:?\d]*)\S*$/.test(url);
 }
