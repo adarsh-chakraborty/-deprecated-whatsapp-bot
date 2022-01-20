@@ -12,6 +12,7 @@ const { Client, Util, MessageMedia } = require('whatsapp-web.js');
 const AuthToken = require('./models/AuthToken');
 const Notes = require('./models/Notes');
 const List = require('./models/List');
+const MeetLink = require('./models/MeetLink');
 const qrcode = require('qrcode-terminal');
 const gTTS = require('gtts');
 
@@ -65,13 +66,16 @@ const initServer = async () => {
 
   client.on('ready', () => {
     console.log('Client is ready!');
-    client.sendMessage(process.env.OWNER, 'Doge bot is up and running! ✅🌍');
-    client.setStatus(`Uptime: ${formatTime(process.uptime())}`);
     isActive = true;
+
+    if (process.env.HEROKU) {
+      client.setStatus(`Uptime: ${formatTime(process.uptime())}`);
+      client.sendMessage(process.env.OWNER, 'Doge bot is up and running! ✅🌍');
+      return;
+    }
   });
 
   /* @everyone when sending from main account. */
-
   /*
   client.on('message_create', async (message) => {
     if (message.body === '@everyone' && message.from === process.env.OWNER) {
@@ -90,7 +94,6 @@ const initServer = async () => {
     }
   });
 */
-
   client.on('message', async (message) => {
     if (!process.env.HEROKU) console.log('MESSAGE RECEIVED', message);
     if (message.isStatus) return;
@@ -110,10 +113,12 @@ const initServer = async () => {
     }
 
     if (message.body === '!whitelist' && message.author === process.env.OWNER) {
+      if (whitelist.has(message.from)) {
+        message.reply('This group already whitelisted. 🤔');
+        return;
+      }
       message.reply('Group whitelisted 📝✅');
-      console.log(message.from);
       whitelist.set(message.from, message.from);
-      console.log(whitelist);
       return;
     }
 
@@ -643,6 +648,41 @@ const initServer = async () => {
 				
 				So, what's the subject?`
       );
+    }
+
+    if (msg.toLowerCase().endsWith('link')) {
+      const subjectlink = msg.split(' ');
+      if (subjectlink.length !== 2) {
+        return;
+      }
+      const subject = subjectlink[0].toLowerCase();
+      const lenk = await MeetLink.findOne({ subject });
+      if (lenk) {
+        if (message.hasQuotedMsg) {
+          const quotedMsg = await message.getQuotedMessage();
+          quotedMsg.reply(`Subject: ${subject}\nMeet Link: ${lenk.link}`);
+          return;
+        }
+        message.reply(`Subject: ${subject}\nMeet Link: ${lenk.link}`);
+      }
+      return;
+    }
+
+    if (msg.startsWith('!setlink')) {
+      const args = msg.split(' ');
+      const subject = args[1];
+      const link = args[2];
+      if (!subject || !link) {
+        message.reply('Invalid syntax, !setlink <subject> <link>');
+        return;
+      }
+      const result = await MeetLink.create({ subject, link });
+      if (result) {
+        message.reply('OK ✅');
+        return;
+      }
+      message.reply('Something went wrong, could not set the link.');
+      return;
     }
   });
 
