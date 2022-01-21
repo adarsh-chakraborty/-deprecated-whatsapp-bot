@@ -79,6 +79,7 @@ const ttslanguages = new Map([
 whitelist.set(process.env.OWNER, process.env.OWNER);
 whitelist.set(process.env.STICKER_GROUP, process.env.STICKER_GROUP);
 whitelist.set(process.env.G10_GROUP, process.env.G10_GROUP);
+whitelist.set(process.env.UNOFFICIAL_GROUP, process.env.UNOFFICIAL_GROUP);
 
 if (!process.env.HEROKU)
   whitelist.set(process.env.TEST_GROUP, process.env.TEST_GROUP);
@@ -392,7 +393,7 @@ const initServer = async () => {
         return;
       }
       message.reply(
-        `${lang} is not recognized as valid language.\nType *!ttsall* to view all supported languages.`
+        `Language *${lang}* is not supported.\nType *!ttsall* to view all supported languages.`
       );
       return;
     }
