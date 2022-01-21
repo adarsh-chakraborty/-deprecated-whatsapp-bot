@@ -153,7 +153,10 @@ const initServer = async () => {
   client.on('message', async (message) => {
     if (!process.env.HEROKU) console.log('MESSAGE RECEIVED', message);
     if (message.isStatus) return;
-    if (message.type === 'sticker') {
+    if (
+      message.type === 'sticker' &&
+      message.from != process.env.UNOFFICIAL_GROUP
+    ) {
       console.log('Received a sticker!');
       const media = await message.downloadMedia();
 

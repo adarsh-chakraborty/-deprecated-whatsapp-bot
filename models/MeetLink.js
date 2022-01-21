@@ -4,7 +4,8 @@ const meetLinkSchema = new mongoose.Schema(
   {
     subject: {
       type: String,
-      required: true
+      required: true,
+      index: true
     },
     link: {
       type: String,
