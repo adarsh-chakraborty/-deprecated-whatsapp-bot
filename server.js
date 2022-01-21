@@ -388,6 +388,15 @@ const initServer = async () => {
       return;
     }
 
+    if (msg === '!ttsall') {
+      let text = '';
+      for (const [key, language] of ttslanguages) {
+        text += `*${key}* - ${language}\n`;
+      }
+      client.sendMessage(message.from, text);
+      return;
+    }
+
     if (msg.startsWith('!ttslang')) {
       const lang = msg.split(' ')[1];
       if (lang && ttslanguages.has(lang)) {
@@ -416,6 +425,7 @@ const initServer = async () => {
 
         client.sendMessage(message.from, audioMsg, { sendAudioAsVoice: true });
       });
+      return;
     }
 
     if (msg === '!ts') {
@@ -772,15 +782,6 @@ const initServer = async () => {
         return;
       }
       message.reply('Something went wrong, could not set the link.');
-      return;
-    }
-
-    if (msg === '!ttsall') {
-      let text = '';
-      for (const [key, language] of ttslanguages) {
-        text += `*${key}* - ${language}\n`;
-      }
-      client.sendMessage(message.from, text);
       return;
     }
 
