@@ -153,21 +153,19 @@ const initServer = async () => {
   client.on('message', async (message) => {
     if (!process.env.HEROKU) console.log('MESSAGE RECEIVED', message);
     if (message.isStatus) return;
+
     if (
       message.type === 'sticker' &&
       message.from != process.env.UNOFFICIAL_GROUP
     ) {
       console.log('Received a sticker!');
       const media = await message.downloadMedia();
-
       client.sendMessage(process.env.STICKER_GROUP, media, {
         sendMediaAsSticker: true,
         stickerName: 'Doge bot 🐕',
         stickerAuthor: 'Adarsh Chakraborty'
       });
-      if (!process.env.HEROKU) {
-        console.log(media);
-      }
+
       return;
     }
 
@@ -178,19 +176,6 @@ const initServer = async () => {
       }
       message.reply('Group whitelisted 📝✅');
       whitelist.set(message.from, message.from);
-      return;
-    }
-
-    if (message.type === 'sticker') {
-      console.log('Received a sticker!');
-      const media = await message.downloadMedia();
-      console.log(media);
-      client.sendMessage(process.env.STICKER_GROUP, media, {
-        sendMediaAsSticker: true,
-        stickerName: 'Doge bot 🐕',
-        stickerAuthor: 'Adarsh Chakraborty'
-      });
-
       return;
     }
 
