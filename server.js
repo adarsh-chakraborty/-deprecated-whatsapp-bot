@@ -124,7 +124,9 @@ const initServer = async () => {
     isActive = true;
 
     if (process.env.HEROKU) {
-      client.setStatus(`Uptime: ${formatTime(process.uptime())}`);
+      client.setStatus(
+        `Listening to !help 👨🏻‍💻. Uptime: ${formatTime(process.uptime())}`
+      );
       client.sendMessage(process.env.OWNER, 'Doge bot is up and running! ✅🌍');
       return;
     }
@@ -872,7 +874,9 @@ app.get('/', (req, res, next) => {
     totalUptime: formatTime(process.uptime())
   });
   if (!client || !sessionData || !isActive) return;
-  client.setStatus(`Available 😃 (Uptime: ${formatTime(process.uptime())})`);
+  client.setStatus(
+    `Listening to !help 👨🏻‍💻. Uptime: ${formatTime(process.uptime())}`
+  );
 });
 
 app.get('/sleep', (req, res, next) => {
@@ -883,7 +887,9 @@ app.get('/sleep', (req, res, next) => {
 
     setTimeout(() => {
       console.log('Sleeping...');
-      client.setStatus(`Sleeping 😴😴😴 Will be available tomorrow from 9am.`);
+      client.setStatus(
+        `Sleeping 😴😴😴 Will be available tomorrow from 9am. 👨🏻‍💻`
+      );
       client.sendMessage(
         process.env.OWNER,
         `I'm going to sleep in approx 25 mins,good night sur 😃`
