@@ -9,7 +9,6 @@ const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
 const axios = require('axios').default;
 const { Client, MessageMedia } = require('whatsapp-web.js');
-const Util = require('whatsapp-web.js/src/util/Util');
 const AuthToken = require('./models/AuthToken');
 const Notes = require('./models/Notes');
 const List = require('./models/List');
