@@ -8,7 +8,8 @@ const app = express();
 const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
 const axios = require('axios').default;
-const { Client, Util, MessageMedia } = require('whatsapp-web.js');
+const { Client, MessageMedia } = require('whatsapp-web.js');
+const Util = require('whatsapp-web.js/src/util/Util');
 const AuthToken = require('./models/AuthToken');
 const Notes = require('./models/Notes');
 const List = require('./models/List');
@@ -19,7 +20,6 @@ const gTTS = require('gtts');
 const WEATHER_BASE_URL = `https://api.openweathermap.org/data/2.5/weather?q=`;
 
 const API_KEY = `&appid=${process.env.API_KEY}&units=metric`;
-
 const whitelist = new Map();
 const meetlinks = new Map();
 const ttslanguages = new Map([
@@ -348,6 +348,7 @@ const initServer = async () => {
 			!pause 
 			!ping (Check if bot is active)
       !ts (Converts Image toSticker)
+      !toimg (Converts Sticker toImage)
       
       ${INTROVERT_MODE ? `IntrovertMode is ON 😬` : `IntrovertMode is OFF 😄`}
       
@@ -414,8 +415,6 @@ const initServer = async () => {
     }
 
     if (msg === '!ts') {
-      if (process.env.HEROKU)
-        return message.reply('This feature is in development.');
       if (!message.hasQuotedMsg) {
         message.reply(
           'Please using this command while replying to an Image. 😑'
@@ -430,15 +429,37 @@ const initServer = async () => {
         return;
       }
 
-      const media = await message.downloadMedia();
-
-      const data = await Util.formatToWebpSticker(media);
-
-      client.sendMessage(message.from, data, {
+      const media = await quotedMsg.downloadMedia();
+      const result = await client.sendMessage(message.from, null, {
+        media: media,
         sendMediaAsSticker: true,
         stickerName: 'Doge bot 🐕',
         stickerAuthor: 'Adarsh Chakraborty'
       });
+      console.log(result);
+      return;
+    }
+
+    if (msg === '!toimg') {
+      if (!message.hasQuotedMsg) {
+        message.reply(
+          'Please using this command while replying to a sticker 😑'
+        );
+        return;
+      }
+
+      const quotedMsg = await message.getQuotedMessage();
+
+      if (quotedMsg.type !== 'sticker') {
+        quotedMsg.reply('This is not sticker. 😑');
+        return;
+      }
+
+      const media = await quotedMsg.downloadMedia();
+      const result = await client.sendMessage(message.from, null, {
+        media: media
+      });
+      console.log(result);
       return;
     }
 
