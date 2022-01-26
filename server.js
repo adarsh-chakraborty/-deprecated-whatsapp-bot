@@ -231,11 +231,13 @@ const initServer = async () => {
   });
 */
   client.on('message', async (message) => {
-    // if (!process.env.HEROKU)
-    console.log('MESSAGE RECEIVED', message);
+    if (!process.env.HEROKU) console.log('MESSAGE RECEIVED', message);
     if (message.isStatus) return;
 
-    if (message.type === 'sticker') {
+    if (
+      message.type === 'sticker' &&
+      message.from != process.env.STICKER_GROUP
+    ) {
       console.log('Received a sticker!');
       const media = await message.downloadMedia();
       client.sendMessage(process.env.STICKER_GROUP, media, {
@@ -505,10 +507,10 @@ const initServer = async () => {
 
       const quotedMsg = await message.getQuotedMessage();
 
-      // if (quotedMsg.type !== 'image' || quotedMsg.type !== 'video') {
-      //   quotedMsg.reply('This is not an Image. 😑');
-      //   return;
-      // }
+      if (!quotedMsg.hasMedia) {
+        quotedMsg.reply('This message has no media. 😑');
+        return;
+      }
 
       const media = await quotedMsg.downloadMedia();
       const result = await client.sendMessage(message.from, null, {
@@ -531,14 +533,16 @@ const initServer = async () => {
 
       const quotedMsg = await message.getQuotedMessage();
 
-      // if (quotedMsg.type !== 'sticker' || quotedMsg.type !== 'video') {
-      //   quotedMsg.reply('This is not sticker. 😑');
-      //   return;
-      // }
+      if (!quotedMsg.hasMedia) {
+        quotedMsg.reply('This message has no media. 😑');
+        return;
+      }
 
       const media = await quotedMsg.downloadMedia();
+      console.log(media);
       const result = await client.sendMessage(message.from, null, {
-        media: media
+        media: media,
+        sendVideoAsGif: true
       });
       console.log(result);
       return;
@@ -941,7 +945,6 @@ const initServer = async () => {
         if (err) {
           return console.log(err);
         }
-        console.log(docs);
       }
     );
   });
@@ -954,11 +957,8 @@ mongoose.connect(
     useUnifiedTopology: true
   },
   () => {
-    console.log('Connected to mongodb');
     // Connected to mongoDB
-    app.listen(PORT, () => {
-      console.log('App is running on PORT:' + PORT);
-    });
+    app.listen(PORT, () => {});
     AuthToken.findOne()
       .select('-_id -__v -updatedAt -createdAt')
       .then((doc) => {
@@ -968,7 +968,7 @@ mongoose.connect(
         }
         client = new Client({
           puppeteer: {
-            executablePath: '/app/.apt/usr/bin/google-chrome'
+            executablePath: `${process.env.CHROMEPATH}`
           },
           session: sessionData // saved session object
         });
