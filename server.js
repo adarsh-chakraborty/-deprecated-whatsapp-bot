@@ -950,34 +950,6 @@ const initServer = async () => {
   });
 };
 
-mongoose.connect(
-  process.env.MONGODB_URI,
-  {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  },
-  () => {
-    // Connected to mongoDB
-    app.listen(PORT, () => {});
-    AuthToken.findOne()
-      .select('-_id -__v -updatedAt -createdAt')
-      .then((doc) => {
-        if (doc) {
-          console.log('Found previous auth, re-using that!');
-          sessionData = doc;
-        }
-        client = new Client({
-          puppeteer: {
-            executablePath: `${process.env.CHROMEPATH}`
-          },
-          session: sessionData // saved session object
-        });
-
-        initServer();
-      });
-  }
-);
-
 const formatTime = (str) => {
   let sec_num = parseInt(str, 10); // don't forget the second param
   let hours = Math.floor(sec_num / 3600);
@@ -1032,6 +1004,38 @@ app.get('/sleep', (req, res, next) => {
   }
   res.json({ message: 'Not authorized, Token missing' });
 });
+
+// Start server and connect to mongodb.
+app.listen(PORT, () => {
+  console.log(`🚀 Server is running on PORT: ${PORT}`);
+});
+
+mongoose.connect(
+  process.env.MONGODB_URI,
+  {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  },
+  () => {
+    console.log(`🍃 Connected to MongoDB.`);
+    AuthToken.findOne()
+      .select('-_id -__v -updatedAt -createdAt')
+      .then((doc) => {
+        if (doc) {
+          console.log('Found previous auth, re-using that!');
+          sessionData = doc;
+        }
+        client = new Client({
+          puppeteer: {
+            executablePath: `${process.env.CHROMEPATH}`
+          },
+          session: sessionData // saved session object
+        });
+
+        initServer();
+      });
+  }
+);
 
 async function getWeather(city = 'bilaspur') {
   try {
