@@ -403,7 +403,9 @@ const initServer = async () => {
 			!note <text> (Add New Note)
 			!notes (View all Notes)
 			!del <note> (Delete Notes)
-			!weather <cityname>
+
+      *Execute Code:*
+      !run <language> (Code from next line)
 			
 			*E-mail*
 			!email !discard !send
@@ -423,6 +425,7 @@ const initServer = async () => {
 
 			*Other*
 			!pause 
+      !weather <cityname>
 			!ping (Check if bot is active)
       !ts (Converts Image toSticker)
       !toimg (Converts Sticker toImage)
@@ -501,7 +504,7 @@ const initServer = async () => {
 
       const quotedMsg = await message.getQuotedMessage();
 
-      if (quotedMsg.type !== 'image') {
+      if (quotedMsg.type !== 'image' || quotedMsg.type !== 'video') {
         quotedMsg.reply('This is not an Image. 😑');
         return;
       }
@@ -527,7 +530,7 @@ const initServer = async () => {
 
       const quotedMsg = await message.getQuotedMessage();
 
-      if (quotedMsg.type !== 'sticker') {
+      if (quotedMsg.type !== 'sticker' || quotedMsg.type !== 'video') {
         quotedMsg.reply('This is not sticker. 😑');
         return;
       }
@@ -960,7 +963,10 @@ mongoose.connect(
           sessionData = doc;
         }
         client = new Client({
-          puppeteer: { args: ['--no-sandbox'] },
+          puppeteer: {
+            executablePath: '/app/.apt/usr/bin/google-chrome',
+            args: ['--no-sandbox']
+          },
           session: sessionData // saved session object
         });
 
