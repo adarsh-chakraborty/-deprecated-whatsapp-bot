@@ -15,10 +15,90 @@ const List = require('./models/List');
 const MeetLink = require('./models/MeetLink');
 const qrcode = require('qrcode-terminal');
 const gTTS = require('gtts');
+const request = require('request');
 
 const WEATHER_BASE_URL = `https://api.openweathermap.org/data/2.5/weather?q=`;
 
 const API_KEY = `&appid=${process.env.API_KEY}&units=metric`;
+
+const supportedLanguages = [
+  'java',
+  'c',
+  'c99',
+  'cpp',
+  'cpp14',
+  'cpp17',
+  'php',
+  'perl',
+  'python2',
+  'python3',
+  'ruby',
+  'go',
+  'scala',
+  'bash',
+  'sql',
+  'pascal',
+  'csharp',
+  'vbn',
+  'haskell',
+  'objc',
+  'swift',
+  'groovy',
+  'fortran',
+  'brainfuck',
+  'lua',
+  'tcl',
+  'hack',
+  'rust',
+  'd',
+  'ada',
+  'r',
+  'freebasic',
+  'verilog',
+  'cobol',
+  'dart',
+  'yabasic',
+  'clojure',
+  'nodejs',
+  'scheme',
+  'forth',
+  'prolog',
+  'octave',
+  'coffeescript',
+  'icon',
+  'fsharp',
+  'nasm',
+  'gccasm',
+  'intercal',
+  'nemerle',
+  'ocaml',
+  'unlambda',
+  'picolisp',
+  'spidermonkey',
+  'rhino',
+  'bc',
+  'clisp',
+  'elixir',
+  'factor',
+  'falcon',
+  'fantom',
+  'nim',
+  'pike',
+  'smalltalk',
+  'mozart',
+  'lolcode',
+  'racket',
+  'kotlin',
+  'whitespace',
+  'erlang',
+  'jlang',
+  'haxe',
+  'fasm',
+  'awk',
+  'algol',
+  'befunge'
+];
+
 const whitelist = new Map();
 const meetlinks = new Map();
 const ttslanguages = new Map([
@@ -78,7 +158,6 @@ const ttslanguages = new Map([
 whitelist.set(process.env.OWNER, process.env.OWNER);
 whitelist.set(process.env.STICKER_GROUP, process.env.STICKER_GROUP);
 whitelist.set(process.env.G10_GROUP, process.env.G10_GROUP);
-whitelist.set(process.env.UNOFFICIAL_GROUP, process.env.UNOFFICIAL_GROUP);
 
 if (!process.env.HEROKU)
   whitelist.set(process.env.TEST_GROUP, process.env.TEST_GROUP);
@@ -155,10 +234,7 @@ const initServer = async () => {
     if (!process.env.HEROKU) console.log('MESSAGE RECEIVED', message);
     if (message.isStatus) return;
 
-    if (
-      message.type === 'sticker' &&
-      message.from != process.env.UNOFFICIAL_GROUP
-    ) {
+    if (message.type === 'sticker') {
       console.log('Received a sticker!');
       const media = await message.downloadMedia();
       client.sendMessage(process.env.STICKER_GROUP, media, {
@@ -789,6 +865,53 @@ const initServer = async () => {
         return;
       }
       message.reply('Something went wrong, could not set the link.');
+      return;
+    }
+
+    if (msg.startsWith('!run')) {
+      const firstlineIndex = msg.indexOf('\n');
+      const firstLine = msg.substring(0, firstlineIndex);
+
+      const language = firstLine.split(' ')[1];
+
+      if (!supportedLanguages.includes(language)) {
+        return await message.reply(
+          `❌ Unsupported language!\nSupported languages are:\n${supportedLanguages.join()}`
+        );
+      }
+
+      const script = msg.substring(firstlineIndex + 1);
+
+      /* Prepare Payload */
+
+      const program = {
+        script,
+        language,
+        versionIndex: '0',
+        clientId: process.env.JCLIENTID,
+        clientSecret: process.env.JCLIENTSECRET
+      };
+
+      request(
+        {
+          url: 'https://api.jdoodle.com/v1/execute',
+          method: 'POST',
+          json: program
+        },
+        async function (error, response, body) {
+          console.log('error:', error);
+          console.log('statusCode:', response && response.statusCode);
+          console.log('body:', body);
+
+          if (response && response.statusCode === 200) {
+            return await message.reply(`${body.output.trim()}`);
+          }
+
+          return await message.reply(
+            `Error: ${error}\nStatus code: ${response && response.statusCode}`
+          );
+        }
+      );
       return;
     }
 
