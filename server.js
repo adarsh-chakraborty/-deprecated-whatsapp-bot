@@ -945,6 +945,7 @@ const initServer = async () => {
     );
   });
 };
+
 mongoose.connect(
   process.env.MONGODB_URI,
   {
@@ -952,20 +953,21 @@ mongoose.connect(
     useUnifiedTopology: true
   },
   () => {
+    console.log('Connected to mongodb');
     // Connected to mongoDB
-    app.listen(PORT);
+    app.listen(PORT, () => {
+      console.log('App is running on PORT:' + PORT);
+    });
     AuthToken.findOne()
       .select('-_id -__v -updatedAt -createdAt')
       .then((doc) => {
         if (doc) {
           console.log('Found previous auth, re-using that!');
-          console.log(doc);
           sessionData = doc;
         }
         client = new Client({
           puppeteer: {
-            executablePath: '/app/.apt/usr/bin/google-chrome',
-            args: ['--no-sandbox']
+            executablePath: '/app/.apt/usr/bin/google-chrome'
           },
           session: sessionData // saved session object
         });
