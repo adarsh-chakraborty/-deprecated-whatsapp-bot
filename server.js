@@ -231,7 +231,8 @@ const initServer = async () => {
   });
 */
   client.on('message', async (message) => {
-    if (!process.env.HEROKU) console.log('MESSAGE RECEIVED', message);
+    // if (!process.env.HEROKU)
+    console.log('MESSAGE RECEIVED', message);
     if (message.isStatus) return;
 
     if (message.type === 'sticker') {
@@ -504,10 +505,10 @@ const initServer = async () => {
 
       const quotedMsg = await message.getQuotedMessage();
 
-      if (quotedMsg.type !== 'image' || quotedMsg.type !== 'video') {
-        quotedMsg.reply('This is not an Image. 😑');
-        return;
-      }
+      // if (quotedMsg.type !== 'image' || quotedMsg.type !== 'video') {
+      //   quotedMsg.reply('This is not an Image. 😑');
+      //   return;
+      // }
 
       const media = await quotedMsg.downloadMedia();
       const result = await client.sendMessage(message.from, null, {
@@ -530,10 +531,10 @@ const initServer = async () => {
 
       const quotedMsg = await message.getQuotedMessage();
 
-      if (quotedMsg.type !== 'sticker' || quotedMsg.type !== 'video') {
-        quotedMsg.reply('This is not sticker. 😑');
-        return;
-      }
+      // if (quotedMsg.type !== 'sticker' || quotedMsg.type !== 'video') {
+      //   quotedMsg.reply('This is not sticker. 😑');
+      //   return;
+      // }
 
       const media = await quotedMsg.downloadMedia();
       const result = await client.sendMessage(message.from, null, {
