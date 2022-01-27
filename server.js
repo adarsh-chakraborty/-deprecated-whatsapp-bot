@@ -474,7 +474,11 @@ const initServer = async () => {
         return;
       }
       message.reply(
-        `Language *${lang}* is not supported.\nType *!ttsall* to view all supported languages.`
+        `${
+          lang
+            ? `Language *${lang}* is not supported`
+            : 'Set language by *!ttslang* <language>'
+        }.\nType *!ttsall* to view all supported languages.`
       );
       return;
     }
@@ -486,12 +490,20 @@ const initServer = async () => {
         return await message.reply('❌ Invalid syntax! Try !tts <text>');
 
       const gtts = new gTTS(text, ttslang);
+
       gtts.save('./audio.mp3', async function (err, result) {
         if (err) {
           return;
         }
+        if (message.hasQuotedMsg) {
+          console.time('doSomething');
+          const quotedMsg = await message.getQuotedMessage();
+          const audioMsg = await MessageMedia.fromFilePath('./audio.mp3');
+          console.timeEnd('doSomething');
+          quotedMsg.reply(audioMsg, null, { sendAudioAsVoice: true });
+          return;
+        }
         const audioMsg = await MessageMedia.fromFilePath('./audio.mp3');
-
         client.sendMessage(message.from, audioMsg, { sendAudioAsVoice: true });
       });
       return;
