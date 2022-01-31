@@ -198,7 +198,7 @@ const initServer = async () => {
     console.log(qr);
   });
 
-  client.on('ready', () => {
+  client.on('ready', async () => {
     console.log('Client is ready!');
     isActive = true;
 
@@ -209,6 +209,13 @@ const initServer = async () => {
       client.sendMessage(process.env.OWNER, 'Doge bot is up and running! ✅🌍');
       return;
     }
+    const catImg = await getCatSticker();
+    const media = new MessageMedia('video/mp4', catImg);
+    client.sendMessage(process.env.OWNER, media, {
+      sendMediaAsSticker: true,
+      stickerName: 'Doge bot 🐕',
+      stickerAuthor: 'Adarsh Chakraborty'
+    });
   });
 
   /* @everyone when sending from main account. */
@@ -495,14 +502,7 @@ const initServer = async () => {
         if (err) {
           return;
         }
-        if (message.hasQuotedMsg) {
-          console.time('doSomething');
-          const quotedMsg = await message.getQuotedMessage();
-          const audioMsg = await MessageMedia.fromFilePath('./audio.mp3');
-          console.timeEnd('doSomething');
-          quotedMsg.reply(audioMsg, null, { sendAudioAsVoice: true });
-          return;
-        }
+
         const audioMsg = await MessageMedia.fromFilePath('./audio.mp3');
         client.sendMessage(message.from, audioMsg, { sendAudioAsVoice: true });
       });
@@ -1120,4 +1120,11 @@ function isValidEmail(str) {
 
 function isValidURL(url) {
   return /^(?:\w+:)?\/\/([^\s\.]+\.\S{2}|localhost[\:?\d]*)\S*$/.test(url);
+}
+
+async function getCatSticker() {
+  const { data } = await axios.get('https://cataas.com/cat/gif', {
+    responseType: 'arraybuffer'
+  });
+  return await Buffer.from(data, 'binary').toString('base64');
 }
