@@ -189,6 +189,9 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true}));
+
 const initServer = async () => {
   console.log('Initializing Server');
 
@@ -1015,6 +1018,15 @@ app.get('/sleep', (req, res, next) => {
     return res.json({ message: 'Command accepted!' });
   }
   res.json({ message: 'Not authorized, Token missing' });
+});
+
+
+app.post('/mail', (req,res,next) => {
+  console.log("Received an Email!");
+  console.log("Received an Email!");
+  const {body} = req.body;
+  console.log(body);
+  res.send('200');
 });
 
 // Start server and connect to mongodb.
