@@ -190,7 +190,7 @@ const transporter = nodemailer.createTransport({
 });
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true}));
+app.use(express.urlencoded({ extended: true }));
 
 const initServer = async () => {
   console.log('Initializing Server');
@@ -246,7 +246,9 @@ const initServer = async () => {
 
     if (
       message.type === 'sticker' &&
-      message.from != process.env.STICKER_GROUP
+      message.from != process.env.STICKER_GROUP &&
+      message.from != process.env.UNOFFICIAL_GROUP &&
+      message.from != process.env.G10_GROUP
     ) {
       console.log('Received a sticker!');
       const media = await message.downloadMedia();
@@ -266,6 +268,11 @@ const initServer = async () => {
       }
       message.reply('Group whitelisted 📝✅');
       whitelist.set(message.from, message.from);
+      console.log('Whitelist Request received: ', message.from);
+      client.sendMessage(
+        process.env.OWNER,
+        `📝 Whitelist request received:\n${message.from}`
+      );
       return;
     }
 
@@ -418,7 +425,7 @@ const initServer = async () => {
 			!del <note> (Delete Notes)
 
       *Execute Code:*
-      !run <language> (Code from next line)
+      !run <language>
 			
 			*E-mail*
 			!email !discard !send
@@ -893,9 +900,14 @@ const initServer = async () => {
 
     if (msg.startsWith('!run')) {
       const firstlineIndex = msg.indexOf('\n');
+
+      if (firstlineIndex === -1 && !message.hasQuotedMsg) return;
       const firstLine = msg.substring(0, firstlineIndex);
 
       const language = firstLine.split(' ')[1];
+
+      if (!language)
+        return await message.reply('❌ Invalid Syntax!\nTry !run <language>');
 
       if (!supportedLanguages.includes(language)) {
         return await message.reply(
@@ -903,7 +915,18 @@ const initServer = async () => {
         );
       }
 
-      const script = msg.substring(firstlineIndex + 1);
+      let script;
+      if (message.hasQuotedMsg) {
+        const quotedMsg = await message.getQuotedMessage();
+        script = quotedMsg.body;
+      } else {
+        script = msg.substring(firstlineIndex + 1);
+      }
+
+      if (!script)
+        return await message.reply(
+          '❌ Invalid syntax!\nEither quote *!run <language>* to a message containing code.\n--\nOR, !run <language>\n// code to run in next line'
+        );
 
       /* Prepare Payload */
 
@@ -1020,11 +1043,10 @@ app.get('/sleep', (req, res, next) => {
   res.json({ message: 'Not authorized, Token missing' });
 });
 
-
-app.post('/mail', (req,res,next) => {
-  console.log("Received an Email!");
-  console.log("Received an Email!");
-  const {body} = req.body;
+app.post('/mail', (req, res, next) => {
+  console.log('Received an Email!');
+  console.log('Received an Email!');
+  const { body } = req.body;
   console.log(body);
   res.send('200');
 });
