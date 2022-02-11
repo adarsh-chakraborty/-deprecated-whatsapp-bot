@@ -158,9 +158,8 @@ const ttslanguages = new Map([
 whitelist.set(process.env.OWNER, process.env.OWNER);
 whitelist.set(process.env.STICKER_GROUP, process.env.STICKER_GROUP);
 whitelist.set(process.env.G10_GROUP, process.env.G10_GROUP);
-
-if (!process.env.HEROKU)
-  whitelist.set(process.env.TEST_GROUP, process.env.TEST_GROUP);
+whitelist.set(process.env.UNOFFICIAL_GROUP, process.env.UNOFFICIAL_GROUP);
+whitelist.set(process.env.TEST_GROUP, process.env.TEST_GROUP);
 
 let sessionData;
 let client;
@@ -1043,11 +1042,9 @@ app.get('/sleep', (req, res, next) => {
   res.json({ message: 'Not authorized, Token missing' });
 });
 
-app.post('/mail', (req, res, next) => {
+app.post('/classroom', (req, res, next) => {
   console.log('Received an Email!');
-  console.log('Received an Email!');
-  const { body } = req.body;
-  console.log(body);
+  console.log(req.body);
   res.send('200');
 });
 
