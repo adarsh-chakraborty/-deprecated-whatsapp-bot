@@ -189,7 +189,7 @@ const transporter = nodemailer.createTransport({
 });
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: false }));
 
 const initServer = async () => {
   console.log('Initializing Server');
@@ -1022,7 +1022,7 @@ app.get('/', (req, res, next) => {
 
 app.get('/sleep', (req, res, next) => {
   const token = req.header('SLEEP_SECRET');
-  if (token === process.env.SLEEP_SECRET) {
+  if (token === process.env.SECRET) {
     if (!client || !sessionData || !isActive)
       return res.status(500).json({ message: ' Doge BOT is not ready' });
 
@@ -1044,8 +1044,22 @@ app.get('/sleep', (req, res, next) => {
 
 app.post('/classroom', (req, res, next) => {
   console.log('Received an Email!');
+  const key = req.query.key;
   console.log(req.body);
-  res.send('200');
+  if (!key) return res.status(400).send('Auth Error: Missing token');
+
+  if (key != process.env.SECRET)
+    return res.status(400).send('Auth Error: Invalid key');
+
+  const { plain } = req.body;
+
+  const pattern = /(To:.*?\n)|(\[.*?\n)|(Google LLC.*)/gs;
+  const result = plain?.replace(pattern, '');
+
+  if (!result) return;
+  client.sendMessage(process.env.OWNER, result);
+  client.sendMessage(process.env.OWNER, plain);
+  req.send('OK');
 });
 
 // Start server and connect to mongodb.
