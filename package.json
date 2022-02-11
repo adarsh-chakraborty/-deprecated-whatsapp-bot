@@ -9,18 +9,18 @@
   "author": "adarsh chakraborty",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.24.0",
+    "axios": "^0.25.0",
     "express": "^4.17.2",
     "gtts": "^0.2.1",
     "install": "^0.13.0",
-    "mongoose": "^6.1.6",
+    "mongoose": "^6.2.1",
     "nodemailer": "^6.7.2",
-    "npm": "^8.3.1",
+    "npm": "^8.5.0",
     "qrcode-terminal": "^0.12.0",
     "request": "^2.88.2",
-    "whatsapp-web.js": "^1.15.4"
+    "whatsapp-web.js": "^1.15.6"
   },
   "devDependencies": {
-    "dotenv": "^11.0.0"
+    "dotenv": "^16.0.0"
   }
 }

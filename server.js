@@ -250,6 +250,7 @@ const initServer = async () => {
       message.from != process.env.G10_GROUP
     ) {
       console.log('Received a sticker!');
+
       const media = await message.downloadMedia();
       client.sendMessage(process.env.STICKER_GROUP, media, {
         sendMediaAsSticker: true,
@@ -1056,10 +1057,14 @@ app.post('/classroom', (req, res, next) => {
   const pattern = /(To:.*?\n)|(\[.*?\n)|(Google LLC.*)/gs;
   const result = plain?.replace(pattern, '');
 
-  if (!result) return;
+  if (!result)
+    return res
+      .status(202)
+      .send('Request was accepted but nothing really changed.');
+
   client.sendMessage(process.env.OWNER, result);
   client.sendMessage(process.env.OWNER, plain);
-  req.send('OK');
+  res.status(201).send('OK');
 });
 
 // Start server and connect to mongodb.
