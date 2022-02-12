@@ -899,9 +899,13 @@ const initServer = async () => {
     }
 
     if (msg.startsWith('!run')) {
-      const firstlineIndex = msg.indexOf('\n');
+      let firstlineIndex;
+      if (message.hasQuotedMsg) {
+        firstlineIndex = msg.length;
+      } else {
+        firstlineIndex = msg.indexOf('\n');
+      }
 
-      if (firstlineIndex === -1 && !message.hasQuotedMsg) return;
       const firstLine = msg.substring(0, firstlineIndex);
 
       const language = firstLine.split(' ')[1];
@@ -915,7 +919,6 @@ const initServer = async () => {
         );
       }
 
-      let script;
       if (message.hasQuotedMsg) {
         const quotedMsg = await message.getQuotedMessage();
         script = quotedMsg.body;
@@ -1033,10 +1036,41 @@ app.get('/sleep', (req, res, next) => {
         `Sleeping 😴😴😴 Will be available tomorrow from 9am. 👨🏻‍💻`
       );
       client.sendMessage(
-        process.env.OWNER,
-        `I'm going to sleep in approx 25 mins,good night sur 😃`
+        process.env.TEST_GROUP,
+        `I'm going to sleep in 25 mins,good night sur 😃`
       );
     }, 1500000);
+
+    return res.json({ message: 'Command accepted!' });
+  }
+  res.json({ message: 'Not authorized, Token missing' });
+});
+
+app.get('/wakeup', async (req, res, next) => {
+  const token = req.header('SLEEP_SECRET');
+  if (token === process.env.SECRET) {
+    if (!client || !sessionData || !isActive)
+      return res.status(500).json({ message: ' Doge BOT is not ready' });
+
+    client.setStatus(`Available 😃. Uptime: ${formatTime(process.uptime())}`);
+
+    client.sendMessage(
+      process.env.TEST_GROUP,
+      `Doge bot is now up and running on port: ${PORT} ✅🌍`
+    );
+
+    const {
+      data: {
+        contents: { quotes }
+      }
+    } = await axios.get('https://quotes.rest/qod', {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    client.sendMessage(
+      process.env.TEST_GROUP,
+      `*Quote of the Day* 🌷\n${quotes[0].quote}`
+    );
 
     return res.json({ message: 'Command accepted!' });
   }
@@ -1063,7 +1097,7 @@ app.post('/classroom', (req, res, next) => {
       .send('Request was accepted but nothing really changed.');
 
   client.sendMessage(process.env.OWNER, result);
-  client.sendMessage(process.env.OWNER, plain);
+  client.sendMessage(process.env.TEST_GROUP, plain);
   res.status(201).send('OK');
 });
 
