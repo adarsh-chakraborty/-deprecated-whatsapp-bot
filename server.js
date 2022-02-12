@@ -6,7 +6,6 @@ const express = require('express');
 const app = express();
 
 const mongoose = require('mongoose');
-const nodemailer = require('nodemailer');
 const axios = require('axios').default;
 const { Client, MessageMedia } = require('whatsapp-web.js');
 const AuthToken = require('./models/AuthToken');
@@ -168,26 +167,6 @@ let isActive = false;
 let INTROVERT_MODE = true;
 let ttslang = 'en';
 
-let user = {
-  isComposing: false,
-  isWritingSubject: false,
-  isWritingBody: false,
-  isWritingTarget: false,
-  isWritingName: false,
-  isWritingFrom: false,
-  confirm: false
-};
-
-let email = null;
-
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.MAILUSER,
-    pass: process.env.MAILPASS
-  }
-});
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -296,119 +275,6 @@ const initServer = async () => {
 
     if (!isActive) return;
 
-    if (msg === '!discard') {
-      user.isComposing = false;
-      user.isWritingSubject = false;
-      user.isWritingBody = false;
-      user.isWritingTarget = false;
-      user.isWritingName = false;
-      user.confirm = false;
-      user.isWritingFrom = false;
-      email = null;
-      client.sendMessage(message.from, 'Discarded. 🗑️');
-      return;
-    }
-    if (msg === '!draft') {
-      user.isComposing = false;
-      user.isWritingSubject = false;
-      user.isWritingBody = false;
-      user.isWritingTarget = false;
-      user.isWritingName = false;
-      user.confirm = false;
-      user.isWritingFrom = false;
-      client.sendMessage(message.from, 'Draft Saved. 💾');
-      return;
-    }
-
-    if (user.isComposing) {
-      if (user.isWritingSubject) {
-        if (msg.trim().length === 0) {
-          message.reply('Please enter subject 😒');
-          return;
-        }
-
-        email.subject = msg;
-        user.isWritingSubject = false;
-        user.isWritingBody = true;
-        client.sendMessage(message.from, `Alright, What's the message?`);
-        return;
-      } else if (user.isWritingBody) {
-        if (msg.trim().length === 0) {
-          message.reply('Please enter some message 😒');
-          return;
-        }
-        email.body = msg;
-        user.isWritingBody = false;
-        user.isWritingTarget = true;
-        client.sendMessage(
-          message.from,
-          `Noted, To where should I send this e-mail?`
-        );
-        return;
-      } else if (user.isWritingTarget) {
-        if (msg.trim().length === 0) {
-          message.reply('Please enter e-mail address of the recipient. 😒');
-          return;
-        }
-        if (!isValidEmail(msg)) {
-          message.reply('Please enter a valid e-mail address. 😒');
-          return;
-        }
-
-        email.target = msg;
-        user.isWritingTarget = false;
-        user.isWritingFrom = true;
-        client.sendMessage(
-          message.from,
-          'Enter your e-mail address, It will set as reply-to on the mail.'
-        );
-        return;
-      } else if (user.isWritingFrom) {
-        if (msg.trim().length === 0) {
-          message.reply('Please your e-mail address. 😒');
-          return;
-        }
-        if (!isValidEmail(msg)) {
-          message.reply('Please enter a valid e-mail address. 😒');
-          return;
-        }
-        user.isWritingFrom = false;
-        user.isWritingName = true;
-        email.from = msg;
-        client.sendMessage(
-          message.from,
-          'Okay, What should be the name on the e-mail?'
-        );
-      } else if (user.isWritingName) {
-        if (msg.trim().length === 0) {
-          message.reply('Please enter your name 😒');
-          return;
-        }
-        email.name = msg;
-        user.isWritingName = false;
-        user.confirm = true;
-        client.sendMessage(
-          message.from,
-          `To: ${email.target}\n\nFrom: ${email.name} <${email.from}>\nSubject: ${email.subject}\nMessage: ${email.body}\n\n--- End of the E-mail ---\n\n*Confirm Send? <yes>*`
-        );
-      } else if (user.confirm) {
-        user.isComposing = false;
-        user.confirm = false;
-        if (msg.toLowerCase() === 'yes' || msg.toLowerCase() === 'yus') {
-          sendMail();
-          client.sendMessage(message.from, 'Your e-mail was sent. ✅');
-          return;
-        }
-
-        client.sendMessage(
-          message.from,
-          `E-mail saved to draft. Type !draft to check it.`
-        );
-      }
-
-      return;
-    }
-
     if (msg === '!help') {
       let weather = await getWeather();
       let welcome_template = `
@@ -426,9 +292,6 @@ const initServer = async () => {
 
       *Execute Code:*
       !run <language>
-			
-			*E-mail*
-			!email !discard !send
 
       *Text-To-Speech*
       *!tts* <text>
@@ -815,36 +678,6 @@ const initServer = async () => {
       return;
     }
 
-    if (msg === '!email') {
-      email = {};
-      user.isComposing = true;
-      user.isWritingSubject = true;
-
-      client.sendMessage(
-        message.from,
-        `
-				*Composing E-mail* 📧
-				You're composing an e-mail now!
-
-				Type *!discard* to discard anytime.
-				Type *!draft* to save as draft.
-				
-				So, what's the subject?`
-      );
-    }
-
-    if (msg === '!send') {
-      client.sendMessage(
-        message.from,
-        `*Composing E-mail* 📧
-
-				You're composing an e-mail now!
-				Type !cancel to discard anytime. *!draft* to save as draft.
-				
-				So, what's the subject?`
-      );
-    }
-
     if (msg.toLowerCase().endsWith('link')) {
       const subjectlink = msg.split(' ');
       if (subjectlink.length !== 2) {
@@ -1078,7 +911,7 @@ app.get('/wakeup', async (req, res, next) => {
 });
 
 app.post('/classroom', (req, res, next) => {
-  console.log('Received an Email!');
+  console.log('Received an Classroom notification!');
   const key = req.query.key;
   console.log(req.body);
   if (!key) return res.status(400).send('Auth Error: Missing token');
@@ -1169,37 +1002,6 @@ async function getWeather(city = 'bilaspur') {
     console.error(error);
   }
   return `Some error occured.`;
-}
-
-function sendMail() {
-  console.log('Sending mail', email);
-  let mailOptions = {
-    from: `${email.name} <${email.from}>`,
-    to: email.target,
-    replyTo: email.from,
-    subject: email.subject,
-    text: email.body
-  };
-
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      return `Some error occured while trying to send the mail.
-			 ${error}`;
-    } else {
-      console.log('Email sent: ' + info.response);
-      return `Email sent ✔️
-			${info.response}`;
-    }
-  });
-}
-
-function isValidEmail(str) {
-  const pattern =
-    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-  if (str.match(pattern)) {
-    return true;
-  }
-  return false;
 }
 
 function isValidURL(url) {
