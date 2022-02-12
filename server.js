@@ -3,6 +3,7 @@ if (!process.env.HEROKU) {
 }
 
 const express = require('express');
+const fs = require('fs');
 const app = express();
 
 const mongoose = require('mongoose');
@@ -183,6 +184,8 @@ const initServer = async () => {
     console.log('Client is ready!');
     isActive = true;
 
+    // sendCatSticker();
+
     if (process.env.HEROKU) {
       client.setStatus(
         `Listening to !help 👨🏻‍💻. Uptime: ${formatTime(process.uptime())}`
@@ -190,13 +193,6 @@ const initServer = async () => {
       client.sendMessage(process.env.OWNER, 'Doge bot is up and running! ✅🌍');
       return;
     }
-    const catImg = await getCatSticker();
-    const media = new MessageMedia('video/mp4', catImg);
-    client.sendMessage(process.env.OWNER, media, {
-      sendMediaAsSticker: true,
-      stickerName: 'Doge bot 🐕',
-      stickerAuthor: 'Adarsh Chakraborty'
-    });
   });
 
   /* @everyone when sending from main account. */
@@ -797,6 +793,16 @@ const initServer = async () => {
       return;
     }
 
+    if (msg.toLowerCase() === 'send syllabus') {
+      const mediaData = await MessageMedia.fromFilePath(
+        './static/GGU_MCA_SYLLABUS.pdf'
+      );
+      client.sendMessage(message.from, mediaData, {
+        sendMediaAsDocument: true
+      });
+      return;
+    }
+
     // On Message Event Ends Here
   });
 
@@ -889,7 +895,7 @@ app.get('/wakeup', async (req, res, next) => {
 
     client.sendMessage(
       process.env.TEST_GROUP,
-      `Doge bot is now up and running on port: ${PORT} ✅🌍`
+      `Doge bot is now up and running. ✅🌍`
     );
 
     const {
@@ -902,7 +908,7 @@ app.get('/wakeup', async (req, res, next) => {
 
     client.sendMessage(
       process.env.TEST_GROUP,
-      `*Quote of the Day* 🌷\n${quotes[0].quote}`
+      `*Quote of the Day* 🌷\n\`\`\`${quotes[0].quote}\`\`\``
     );
 
     return res.json({ message: 'Command accepted!' });
@@ -929,8 +935,9 @@ app.post('/classroom', (req, res, next) => {
       .status(202)
       .send('Request was accepted but nothing really changed.');
 
-  client.sendMessage(process.env.OWNER, result);
-  client.sendMessage(process.env.TEST_GROUP, plain);
+  client.sendMessage(process.env.OWNER, plain);
+  client.sendMessage(process.env.TEST_GROUP, result);
+  client.sendMessage(process.env.G10_GROUP, result);
   res.status(201).send('OK');
 });
 
@@ -1008,9 +1015,25 @@ function isValidURL(url) {
   return /^(?:\w+:)?\/\/([^\s\.]+\.\S{2}|localhost[\:?\d]*)\S*$/.test(url);
 }
 
-async function getCatSticker() {
+async function sendCatSticker() {
   const { data } = await axios.get('https://cataas.com/cat/gif', {
     responseType: 'arraybuffer'
   });
-  return await Buffer.from(data, 'binary').toString('base64');
+
+  fs.writeFileSync('./static/cat.gif', data);
+  const tempMedia = await MessageMedia.fromFilePath('./static/cat.gif');
+
+  console.log('Cat Init Meeoww');
+
+  // const media = await MessageMedia.fromUrl('https://cataas.com/cat/gif', {
+  //   unsafeMime: true,
+  //   filename: 'cat.gif'
+  // });
+
+  const result = await client.sendMessage(process.env.OWNER, tempMedia, {
+    sendMediaAsSticker: true,
+    stickerName: 'Doge bot 🐕',
+    stickerAuthor: 'Adarsh Chakraborty'
+  });
+  console.log(result);
 }
