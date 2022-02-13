@@ -797,10 +797,15 @@ const initServer = async () => {
       const mediaData = await MessageMedia.fromFilePath(
         './static/GGU_MCA_SYLLABUS.pdf'
       );
-      client.sendMessage(message.from, mediaData, {
+
+      if (message.hasQuotedMsg) {
+        const quotedMsg = await message.getQuotedMessage();
+
+        return await quotedMsg.reply(mediaData);
+      }
+      return await client.sendMessage(message.from, mediaData, {
         sendMediaAsDocument: true
       });
-      return;
     }
 
     // On Message Event Ends Here
@@ -876,7 +881,7 @@ app.get('/sleep', (req, res, next) => {
       );
       client.sendMessage(
         process.env.TEST_GROUP,
-        `I'm going to sleep in 25 mins,good night sur 😃`
+        `I'm going to sleep in 25 mins.\nGood night sur 😃`
       );
     }, 1500000);
 
@@ -893,10 +898,7 @@ app.get('/wakeup', async (req, res, next) => {
 
     client.setStatus(`Available 😃. Uptime: ${formatTime(process.uptime())}`);
 
-    client.sendMessage(
-      process.env.TEST_GROUP,
-      `Doge bot is now up and running. ✅🌍`
-    );
+    client.sendMessage(process.env.TEST_GROUP, `Doge bot is now up. ✅🌍`);
 
     const {
       data: {
@@ -908,7 +910,7 @@ app.get('/wakeup', async (req, res, next) => {
 
     client.sendMessage(
       process.env.TEST_GROUP,
-      `*Quote of the Day* 🌷\n\`\`\`${quotes[0].quote}\`\`\``
+      `*Quote of the Day* 🌷\n${quotes[0].quote}`
     );
 
     return res.json({ message: 'Command accepted!' });
@@ -925,7 +927,18 @@ app.post('/classroom', (req, res, next) => {
   if (key != process.env.SECRET)
     return res.status(400).send('Auth Error: Invalid key');
 
-  const { plain } = req.body;
+  const {
+    plain,
+    headers: { subject }
+  } = req.body;
+
+  if (subject.toLowerCase().contains('due tomorrow')) {
+    console.log('Due tomorrow email received so returned.');
+    return await client.sendMessage(
+      process.env.OWNER,
+      'Your assignment is due tomorrow. lel'
+    );
+  }
 
   const pattern = /(To:.*?\n)|(\[.*?\n)|(Google LLC.*)/gs;
   const result = plain?.replace(pattern, '');
@@ -935,9 +948,12 @@ app.post('/classroom', (req, res, next) => {
       .status(202)
       .send('Request was accepted but nothing really changed.');
 
-  client.sendMessage(process.env.OWNER, plain);
-  client.sendMessage(process.env.TEST_GROUP, result);
-  client.sendMessage(process.env.G10_GROUP, result);
+  const payload = result.replace(/adarsh/gi, 'Everyone!');
+
+  client.sendMessage(process.env.OWNER, payload);
+  // client.sendMessage(process.env.TEST_GROUP, payload);
+  // client.sendMessage(process.env.G10_GROUP, payload);
+
   res.status(201).send('OK');
 });
 
