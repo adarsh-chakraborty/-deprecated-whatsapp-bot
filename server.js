@@ -934,10 +934,11 @@ app.post('/classroom', async (req, res, next) => {
 
   if (subject?.toLowerCase()?.includes('due tomorrow')) {
     console.log('Due tomorrow email received so returned.');
-    return await client.sendMessage(
+    client.sendMessage(
       process.env.OWNER,
       'Your assignment is due tomorrow. lel'
     );
+    return res.send('OK');
   }
 
   const pattern = /(To:.*?\n)|(\[.*?\n)|(Google LLC.*)/gs;
