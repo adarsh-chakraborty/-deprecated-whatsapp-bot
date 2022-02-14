@@ -936,12 +936,12 @@ app.post('/classroom', async (req, res, next) => {
     console.log('Due tomorrow email received so returned.');
     client.sendMessage(
       process.env.OWNER,
-      `*Classroom Notification:*\n${subject}`
+      `*Assignment Due Notification:*\n${subject}`
     );
     return res.send('OK');
   }
 
-  const pattern = /(To:.*?\n)|(\[.*?\n)|(Google LLC.*)/gs;
+  const pattern = /(To:.*?\n)|(\[.*?\n)|(Google LLC.*)|<|>/gs;
   const result = plain?.replace(pattern, '');
 
   if (!result)
@@ -957,9 +957,18 @@ app.post('/classroom', async (req, res, next) => {
   payload = payload.replace(/Vikas Pandey/gi, 'Vikas sir');
   payload = payload.replace(/Ankita Pandey/gi, "Ankita Ma'am");
 
-  client.sendMessage(process.env.OWNER, payload);
-  // client.sendMessage(process.env.TEST_GROUP, payload);
-  // client.sendMessage(process.env.G10_GROUP, payload);
+  client.sendMessage(
+    process.env.OWNER,
+    `📩 *Classroom Notification:*\n${payload}`
+  );
+  client.sendMessage(
+    process.env.TEST_GROUP,
+    `📩 *Classroom Notification:*\n${payload}`
+  );
+  client.sendMessage(
+    process.env.G10_GROUP,
+    `📩 *Classroom Notification:*\n${payload}`
+  );
 
   res.status(201).send('OK');
 });
