@@ -918,7 +918,7 @@ app.get('/wakeup', async (req, res, next) => {
   res.json({ message: 'Not authorized, Token missing' });
 });
 
-app.post('/classroom', (req, res, next) => {
+app.post('/classroom', async (req, res, next) => {
   console.log('Received an Classroom notification!');
   const key = req.query.key;
   console.log(req.body);
@@ -932,7 +932,7 @@ app.post('/classroom', (req, res, next) => {
     headers: { subject }
   } = req.body;
 
-  if (subject.toLowerCase().contains('due tomorrow')) {
+  if (subject?.toLowerCase()?.includes('due tomorrow')) {
     console.log('Due tomorrow email received so returned.');
     return await client.sendMessage(
       process.env.OWNER,
@@ -1032,24 +1032,18 @@ function isValidURL(url) {
 }
 
 async function sendCatSticker() {
-  const { data } = await axios.get('https://cataas.com/cat/gif', {
-    responseType: 'arraybuffer'
+  const media = await MessageMedia.fromUrl('https://cataas.com/cat/gif', {
+    unsafeMime: true
   });
 
-  fs.writeFileSync('./static/cat.gif', data);
-  const tempMedia = await MessageMedia.fromFilePath('./static/cat.gif');
+  console.log(media);
 
   console.log('Cat Init Meeoww');
 
-  // const media = await MessageMedia.fromUrl('https://cataas.com/cat/gif', {
-  //   unsafeMime: true,
-  //   filename: 'cat.gif'
-  // });
-
-  const result = await client.sendMessage(process.env.OWNER, tempMedia, {
+  client.sendMessage(process.env.OWNER, null, {
+    media: media,
     sendMediaAsSticker: true,
     stickerName: 'Doge bot 🐕',
     stickerAuthor: 'Adarsh Chakraborty'
   });
-  console.log(result);
 }
