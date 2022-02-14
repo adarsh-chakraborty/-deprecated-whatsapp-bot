@@ -936,7 +936,7 @@ app.post('/classroom', async (req, res, next) => {
     console.log('Due tomorrow email received so returned.');
     client.sendMessage(
       process.env.OWNER,
-      'Your assignment is due tomorrow. lel'
+      `*Classroom Notification:*\n${subject}`
     );
     return res.send('OK');
   }
@@ -949,7 +949,13 @@ app.post('/classroom', async (req, res, next) => {
       .status(202)
       .send('Request was accepted but nothing really changed.');
 
-  const payload = result.replace(/adarsh/gi, 'Everyone!');
+  let payload = result.replace(/adarsh/gi, 'Everyone');
+
+  payload = payload.replace(/prashant vaishnav/gi, 'Prashant sir');
+  payload = payload.replace(/Rajwant Singh Rao/gi, 'Rajwant sir');
+  payload = payload.replace(/Suman Laha/gi, 'Suman sir');
+  payload = payload.replace(/Vikas Pandey/gi, 'Vikas sir');
+  payload = payload.replace(/Ankita Pandey/gi, "Ankita Ma'am");
 
   client.sendMessage(process.env.OWNER, payload);
   // client.sendMessage(process.env.TEST_GROUP, payload);
