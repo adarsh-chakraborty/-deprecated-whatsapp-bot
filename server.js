@@ -166,7 +166,7 @@ let client;
 const PORT = process.env.PORT || 3000;
 let isActive = false;
 let INTROVERT_MODE = true;
-let ttslang = 'en';
+let ttslang = 'hi';
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -306,7 +306,7 @@ const initServer = async () => {
 			!pause 
       !weather <cityname>
 			!ping (Check if bot is active)
-      !ts (Converts Image toSticker)
+      !s (Converts Image toSticker)
       !toimg (Converts Sticker toImage)
       
       ${INTROVERT_MODE ? `IntrovertMode is ON 😬` : `IntrovertMode is OFF 😄`}
@@ -366,19 +366,24 @@ const initServer = async () => {
         return await message.reply('❌ Invalid syntax! Try !tts <text>');
 
       const gtts = new gTTS(text, ttslang);
+      const fileName = Math.floor(
+        Math.random() * Math.floor(Math.random() * Date.now())
+      );
 
-      gtts.save('./audio.mp3', async function (err, result) {
+      gtts.save(`./tts/${fileName}audio.mp3`, async function (err, result) {
         if (err) {
           return;
         }
 
-        const audioMsg = await MessageMedia.fromFilePath('./audio.mp3');
+        const audioMsg = await MessageMedia.fromFilePath(
+          `./tts/${fileName}audio.mp3`
+        );
         client.sendMessage(message.from, audioMsg, { sendAudioAsVoice: true });
       });
       return;
     }
 
-    if (msg === '!ts') {
+    if (msg === '!s') {
       if (!message.hasQuotedMsg) {
         message.reply(
           'Please using this command while replying to an Image. 😑'

@@ -3,3 +3,4 @@ node_modules/
 package-lock.json
 audio.mp3
 test.js
+*.mp3
