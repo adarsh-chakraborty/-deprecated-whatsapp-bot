@@ -165,6 +165,7 @@ let sessionData;
 let client;
 const PORT = process.env.PORT || 3000;
 let isActive = false;
+let timeoutFn = null;
 let INTROVERT_MODE = true;
 let ttslang = 'hi';
 
@@ -898,26 +899,7 @@ app.get('/sleep', (req, res, next) => {
 app.get('/wakeup', async (req, res, next) => {
   const token = req.header('SLEEP_SECRET');
   if (token === process.env.SECRET) {
-    if (!client || !sessionData || !isActive)
-      return res.status(500).json({ message: ' Doge BOT is not ready' });
-
-    client.setStatus(`Available 😃. Uptime: ${formatTime(process.uptime())}`);
-
-    client.sendMessage(process.env.TEST_GROUP, `Doge bot is now up. ✅🌍`);
-
-    const {
-      data: {
-        contents: { quotes }
-      }
-    } = await axios.get('https://quotes.rest/qod', {
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    client.sendMessage(
-      process.env.TEST_GROUP,
-      `*Quote of the Day* 🌷\n${quotes[0].quote}`
-    );
-
+    setTimeout(wakeupRoutine, 25000);
     return res.json({ message: 'Command accepted!' });
   }
   res.json({ message: 'Not authorized, Token missing' });
@@ -1067,4 +1049,27 @@ async function sendCatSticker() {
     stickerName: 'Doge bot 🐕',
     stickerAuthor: 'Adarsh Chakraborty'
   });
+}
+
+async function wakeupRoutine() {
+  if (isActive) {
+    client.setStatus(`Available 😃. Uptime: ${formatTime(process.uptime())}`);
+
+    client.sendMessage(process.env.TEST_GROUP, `Doge bot is now up. ✅🌍`);
+
+    const {
+      data: {
+        contents: { quotes }
+      }
+    } = await axios.get('https://quotes.rest/qod', {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    client.sendMessage(
+      process.env.TEST_GROUP,
+      `*Quote of the Day* 🌷\n${quotes[0].quote}`
+    );
+    return;
+  }
+  setTimeout(wakeupRoutine, 30000);
 }
