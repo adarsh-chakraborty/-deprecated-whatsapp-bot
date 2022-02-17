@@ -1,7 +1,7 @@
-var mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 //Define a schema
-var Schema = mongoose.Schema;
+const Schema = mongoose.Schema;
 
-var AuthToken = new Schema({}, { strict: false, timestamps: true });
+const AuthToken = new Schema({}, { strict: false, timestamps: true });
 module.exports = mongoose.model('WAtoken', AuthToken, 'WhatsappAuthToken');

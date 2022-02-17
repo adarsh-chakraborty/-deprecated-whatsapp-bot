@@ -949,7 +949,7 @@ app.post('/classroom', async (req, res, next) => {
     `📩 *Classroom Notification:*\n${payload}`
   );
   client.sendMessage(
-    process.env.TEST_GROUP,
+    process.env.UNOFFICIAL_GROUP,
     `📩 *Classroom Notification:*\n${payload}`
   );
   client.sendMessage(
