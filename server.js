@@ -285,7 +285,7 @@ const initServer = async () => {
 			*Notes*
 			!note <text> (Add New Note)
 			!notes (View all Notes)
-			!del <note> (Delete Notes)
+			!del <note> (Deletes the Note)
 
       *Execute Code:*
       !run <language>
@@ -361,7 +361,15 @@ const initServer = async () => {
     }
 
     if (msg.startsWith('!tts')) {
-      const text = msg.split('!tts')[1].trim();
+      let text;
+
+      if (msg === '!tts' && message.hasQuotedMsg) {
+        const quotedMsg = await message.getQuotedMessage();
+        text = quotedMsg.body;
+      } else {
+        text = msg.split('!tts')[1].trim();
+      }
+
       console.log(text);
       if (!text)
         return await message.reply('❌ Invalid syntax! Try !tts <text>');
@@ -949,7 +957,7 @@ app.post('/classroom', async (req, res, next) => {
     `📩 *Classroom Notification:*\n${payload}`
   );
   client.sendMessage(
-    process.env.UNOFFICIAL_GROUP,
+    process.env.TEST_GROUP,
     `📩 *Classroom Notification:*\n${payload}`
   );
   client.sendMessage(
