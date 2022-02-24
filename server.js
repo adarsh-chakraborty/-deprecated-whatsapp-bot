@@ -160,6 +160,7 @@ whitelist.set(process.env.STICKER_GROUP, process.env.STICKER_GROUP);
 whitelist.set(process.env.G10_GROUP, process.env.G10_GROUP);
 whitelist.set(process.env.UNOFFICIAL_GROUP, process.env.UNOFFICIAL_GROUP);
 whitelist.set(process.env.TEST_GROUP, process.env.TEST_GROUP);
+whitelist.set(process.env.FRESHERS_GROUP, process.env.FRESHERS_GROUP);
 
 let sessionData;
 let client;
@@ -223,7 +224,8 @@ const initServer = async () => {
       message.type === 'sticker' &&
       message.from != process.env.STICKER_GROUP &&
       message.from != process.env.UNOFFICIAL_GROUP &&
-      message.from != process.env.G10_GROUP
+      message.from != process.env.G10_GROUP &&
+      message.from != process.env.FRESHERS_GROUP
     ) {
       console.log('Received a sticker!');
 
@@ -310,8 +312,6 @@ const initServer = async () => {
       !s (Converts Image toSticker)
       !toimg (Converts Sticker toImage)
       
-      ${INTROVERT_MODE ? `IntrovertMode is ON 😬` : `IntrovertMode is OFF 😄`}
-      
       *Tagging Everyone:*
 
       Either start your message like
@@ -320,6 +320,9 @@ const initServer = async () => {
       OR, Reply to a message with
       *@everyone*
       OR, Send a *@everyone* in chat.
+
+      --
+      ${INTROVERT_MODE ? `IntrovertMode is ON 😬` : `IntrovertMode is OFF 😄`}
       `;
       return client.sendMessage(message.from, welcome_template);
     }
@@ -1024,7 +1027,7 @@ async function getWeather(city = 'bilaspur') {
       return `
       ${main} in *${city}*.
       ${desc} ${emoji}.
-      Feels like *${temp}℃*
+      Feels like *${temp}℃* ${temp < 20 ? '🥶' : '🥵'}
       `;
     }
     return `
