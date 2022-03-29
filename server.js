@@ -1066,7 +1066,7 @@ async function wakeupRoutine() {
   if (isActive) {
     client.setStatus(`Available 😃. Uptime: ${formatTime(process.uptime())}`);
 
-    client.sendMessage(process.env.TEST_GROUP, `Doge bot is now up. ✅🌍`);
+    client.sendMessage(process.env.TEST_GROUP, `Doge bot has started! ✅🌍`);
 
     const {
       data: {
