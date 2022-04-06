@@ -17,6 +17,7 @@ const qrcode = require('qrcode-terminal');
 const gTTS = require('gtts');
 const request = require('request');
 const ytdl = require('ytdl-core');
+const ffmpeg = require('fluent-ffmpeg');
 
 const WEATHER_BASE_URL = `https://api.openweathermap.org/data/2.5/weather?q=`;
 
@@ -307,7 +308,8 @@ const initServer = async () => {
 			!dl <index> (Remove # from list)
 
 			*Other*
-      !ytdl <url> (Download video from youtube)
+      !ytv <yturl> (Download video from youtube)
+      !yta <yturl> (Download mp3 audio from youtube)
 			!pause 
       !weather <cityname>
 			!ping (Check if bot is active)
@@ -827,7 +829,7 @@ const initServer = async () => {
       });
     }
 
-    if (msg.startsWith('!ytdl')) {
+    if (msg.startsWith('!ytv')) {
       const url = msg.split(' ')[1];
 
       if (!ytdl.validateURL(url)) {
@@ -843,7 +845,7 @@ const initServer = async () => {
         title = videoInfo.videoDetails.title.replace('?', '');
       }
 
-      const filePath = `./youtubedl/${title}.mp4`;
+      const filePath = `./youtubedl/videos/${title}.mp4`;
       await new Promise((resolve) => {
         ytdl(url)
           .pipe(fs.createWriteStream(filePath))
@@ -851,6 +853,41 @@ const initServer = async () => {
             resolve();
           });
       });
+      const media = MessageMedia.fromFilePath(filePath);
+      client.sendMessage(message.from, media, { sendMediaAsDocument: true });
+    }
+
+    if (msg.startsWith('!yta')) {
+      const url = msg.split(' ')[1];
+
+      if (!ytdl.validateURL(url)) {
+        message.reply('❌ Invalid youtube url!! 😠');
+        return;
+      }
+
+      message.reply('🔄 Downloading Media. Please wait 🦧');
+
+      let title = '';
+      {
+        const videoInfo = await ytdl.getInfo(url);
+        title = videoInfo.videoDetails.title.replace('?', '');
+      }
+
+      const filePath = `./youtubedl/audio/${title}.mp3`;
+
+      let stream = ytdl(url, {
+        quality: 'highestaudio'
+      });
+
+      await new Promise((resolve) => {
+        ffmpeg(stream)
+          .audioBitrate(128)
+          .save(filePath)
+          .on('end', () => {
+            resolve();
+          });
+      });
+
       const media = MessageMedia.fromFilePath(filePath);
       client.sendMessage(message.from, media, { sendMediaAsDocument: true });
     }
