@@ -9,15 +9,17 @@
   "author": "adarsh chakraborty",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.26.0",
+    "axios": "^0.26.1",
     "express": "^4.17.3",
+    "ffmpeg": "^0.0.4",
     "gtts": "^0.2.1",
     "install": "^0.13.0",
-    "mongoose": "^6.2.3",
-    "npm": "^8.5.2",
+    "mongoose": "^6.2.10",
+    "npm": "^8.6.0",
     "qrcode-terminal": "^0.12.0",
     "request": "^2.88.2",
-    "whatsapp-web.js": "^1.16.5"
+    "whatsapp-web.js": "^1.16.5",
+    "ytdl-core": "^4.11.0"
   },
   "devDependencies": {
     "dotenv": "^16.0.0"

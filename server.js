@@ -16,6 +16,7 @@ const MeetLink = require('./models/MeetLink');
 const qrcode = require('qrcode-terminal');
 const gTTS = require('gtts');
 const request = require('request');
+const ytdl = require('ytdl-core');
 
 const WEATHER_BASE_URL = `https://api.openweathermap.org/data/2.5/weather?q=`;
 
@@ -306,6 +307,7 @@ const initServer = async () => {
 			!dl <index> (Remove # from list)
 
 			*Other*
+      !ytdl <url> (Download video from youtube)
 			!pause 
       !weather <cityname>
 			!ping (Check if bot is active)
@@ -823,6 +825,34 @@ const initServer = async () => {
       return await client.sendMessage(message.from, mediaData, {
         sendMediaAsDocument: true
       });
+    }
+
+    if (msg.startsWith('!ytdl')) {
+      const url = msg.split(' ')[1];
+
+      if (!ytdl.validateURL(url)) {
+        message.reply('❌ Invalid youtube url!! 😠');
+        return;
+      }
+
+      message.reply('🔄 Downloading Media. Please wait 🦧');
+
+      let title = '';
+      {
+        const videoInfo = await ytdl.getInfo(url);
+        title = videoInfo.videoDetails.title.replace('?', '');
+      }
+
+      const filePath = `./youtubedl/${title}.mp4`;
+      await new Promise((resolve) => {
+        ytdl(url)
+          .pipe(fs.createWriteStream(filePath))
+          .on('close', () => {
+            resolve();
+          });
+      });
+      const media = MessageMedia.fromFilePath(filePath);
+      client.sendMessage(message.from, media, { sendMediaAsDocument: true });
     }
 
     // On Message Event Ends Here
