@@ -1,6 +1,11 @@
-# WhatsApp Bot
+# [Deprecated]
 
-This is a simple WhatsApp bot, I've used `Whatsapp web.js` library for the API, and MongoDB in backend to save the credentials.
+Doge bot code base updated to bailey's whatsapp web api, this repository is now only for reference purpose. The new repository is private.
+
+
+~# WhatsApp Bot~
+
+~This is a simple WhatsApp bot, I've used `Whatsapp web.js` library for the API, and MongoDB in backend to save the credentials.~
 
 ### Things you can do with the bot
 
@@ -57,4 +62,4 @@ The Bot currently have 1 Instance of notes & list, so all the information is sha
 
 #### The Bot is hosted on Free tier on heroku
 
-I've set it up such that It will be online from 12 PM to 12 AM everyday IST (I wake up at 11 so..)
+I've set it up such that It will be online from 12 PM to 12 AM everyday IST (I wake up at 11 so..)~
